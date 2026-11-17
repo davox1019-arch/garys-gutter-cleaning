@@ -26,7 +26,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: 'Who actually does the work?',
-    a: `${site.name} prepares your quote and books the job. The clean itself is carried out by an independent local sole operator.`,
+    a: 'Gary will come out and do the job. You get your price by text first, then Gary turns up on the day and cleans the gutters.',
   },
   {
     q: 'When is the best time to get gutters cleaned in Perth?',
@@ -94,7 +94,7 @@ const groups = [
 
 <Layout
   title={`Gutter Cleaning Perth | From $${fromPrice} | Trusted & Local`}
-  description={`Gutter cleaning Perth from $${fromPrice} ✓ Trusted local sole operator ✓ Professional service ✓ Free quote ✓ Gutters, downpipes & gutter guard ✓ Hills, east & north`}
+  description={`Gutter cleaning Perth from $${fromPrice} ✓ Trusted & local ✓ Gary will come out ✓ Professional service ✓ Free quote ✓ Gutters, downpipes & gutter guard`}
   schema={[
     serviceSchema({
       name: 'Gutter cleaning',
@@ -134,7 +134,7 @@ const groups = [
       <div class="wrap">
         <p class="section-label">What we do</p>
         <h2>Gutter services across Perth</h2>
-        <p class="lede-sm">Gutters, downpipes and gutter guard across Perth, done by a trusted local sole operator. One enquiry covers all of it.</p>
+        <p class="lede-sm">Gutters, downpipes and gutter guard across Perth — Gary will come out and sort the lot. One enquiry covers all of it.</p>
         <div class="svc-grid">
           {services.map((s) => (
             <a class="svc-card" href={s.href}>
