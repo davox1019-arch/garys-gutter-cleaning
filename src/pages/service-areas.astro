@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import EnquiryForm from '../components/EnquiryForm.astro';
-import { site, priceBadge } from '../../site.config.mjs';
+import { site, priceBadge, fromPrice } from '../../site.config.mjs';
 import { suburbs } from '../data/suburbs';
 import { councils } from '../data/councils';
 
@@ -29,8 +29,8 @@ const groups = [
 ---
 
 <Layout
-  title={`Gutter Cleaning Perth Suburbs | Areas We Service`}
-  description="Gutter cleaning in Kalamunda, Mundaring, Darlington, Roleystone, Guildford, Duncraig, Kingsley and more Perth suburbs. Firm price by text."
+  title={`Gutter Cleaning Perth Suburbs | From $${fromPrice} | Areas Covered`}
+  description={`Gutter cleaning from $${fromPrice} ✓ Kalamunda, Mundaring, Darlington, Roleystone, Guildford, Duncraig, Kingsley & more ✓ Firm price by text ✓ Price confirmed first`}
   crumbs={[{ name: 'Service areas', href: '/service-areas/' }]}
 >
   <main>

@@ -35,14 +35,25 @@ const { s } = Astro.props as { s: Suburb };
 const council = councils[s.council];
 const path = `/gutter-cleaning-${s.slug}/`;
 const p = site.pricing;
-// Search snippet: keyword + postcode + price first, then the three
-// bordering suburbs, which makes each one unique. Kept under 160 characters.
+// Search snippet: keyword + postcode + price first, ticked selling points,
+// then bordering suburbs, which makes each one unique. Kept to 160 characters.
+// Wording never claims the site itself does the cleaning.
 const [n1, n2, n3] = s.neighbours;
 const metaDesc = (() => {
-  const base = `Gutter cleaning in ${s.name} ${s.postcode} from $${fromPrice}. Gutters cleared, downpipes checked, firm price by text.`;
-  const full = `${base} Also ${n1}, ${n2} & ${n3}.`;
-  return full.length <= 160 ? full : `${base} Also ${n1} & ${n2}.`.length <= 160 ? `${base} Also ${n1} & ${n2}.` : base;
+  const base = `Gutter cleaning ${s.name} ${s.postcode} from $${fromPrice} ✓ Firm price by text ✓ Price confirmed before work starts ✓ Gutters & downpipes`;
+  const options = [
+    `${base} ✓ Also ${n1}, ${n2} & ${n3}`,
+    `${base} ✓ Also ${n1} & ${n2}`,
+    `${base} ✓ Also ${n1}`,
+    base,
+  ];
+  return options.find((d) => d.length <= 160) ?? base;
 })();
+const title = [
+  `Gutter Cleaning ${s.name} | From $${fromPrice} | Firm Price by Text`,
+  `Gutter Cleaning ${s.name} | From $${fromPrice} | Price by Text`,
+  `Gutter Cleaning ${s.name} | From $${fromPrice}`,
+].find((t) => t.length <= 60)!;
 const region = { hills: 'Perth Hills', east: 'Eastern Suburbs', north: 'Northern Suburbs' }[s.group];
 
 // What a clean covers. Every line here is a commitment to customers:
@@ -65,7 +76,7 @@ const menu = [
 ---
 
 <Layout
-  title={(() => { const t = `Gutter Cleaning ${s.name} | Gutter Cleaners From $${fromPrice}`; return t.length <= 60 ? t : seoTitle(`Gutter Cleaning ${s.name} | From $${fromPrice}`); })()}
+  title={title}
   description={metaDesc}
   menu={menu}
   crumbs={[{ name: `Gutter cleaning ${s.name}`, href: path }]}
