@@ -28,7 +28,7 @@ export const site = {
   // Only used to tell an after-hours visitor their price will land in the morning.
   quoteHours: { open: 7, close: 18 },
 
-  phone: '',      // TODO: mobile for the Call/Text buttons, e.g. '0400 000 000' — they stay hidden while this is empty
+  phone: '0448 052 770', // Perth mobile: Call/Text buttons, header, footer, schema
   email: '',      // TODO: public contact email — leave empty to show none
   abn: '',        // TODO
   legalName: '',  // TODO: the entity behind the trading name, for the privacy page
