@@ -304,9 +304,12 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // www → bare domain, so Google only ever sees one copy of each page.
-    if (url.hostname.startsWith('www.')) {
-      url.hostname = url.hostname.slice(4);
+    // http → https and www → bare domain, so Google only ever sees one copy
+    // of each page. Local dev (localhost) is left alone.
+    const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    if (!local && (url.protocol === 'http:' || url.hostname.startsWith('www.'))) {
+      url.protocol = 'https:';
+      if (url.hostname.startsWith('www.')) url.hostname = url.hostname.slice(4);
       return Response.redirect(url.toString(), 301);
     }
 
