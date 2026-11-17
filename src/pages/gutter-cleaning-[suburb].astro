@@ -40,7 +40,7 @@ const p = site.pricing;
 // Wording never claims the site itself does the cleaning.
 const [n1, n2, n3] = s.neighbours;
 const metaDesc = (() => {
-  const base = `Gutter cleaning ${s.name} ${s.postcode} from $${fromPrice} ✓ Trusted local contractors ✓ Professional service ✓ Free quote`;
+  const base = `Gutter cleaning ${s.name} ${s.postcode} from $${fromPrice} ✓ Trusted local sole operator ✓ Professional service ✓ Free quote`;
   const options = [
     `${base} ✓ Also ${n1}, ${n2} & ${n3}`,
     `${base} ✓ Also ${n1} & ${n2}`,
@@ -57,7 +57,7 @@ const title = [
 const region = { hills: 'Perth Hills', east: 'Eastern Suburbs', north: 'Northern Suburbs' }[s.group];
 
 // What a clean covers. Every line here is a commitment to customers:
-// CONFIRM EACH ONE WITH THE CONTRACTOR before launch, and delete any that
+// CONFIRM EACH ONE WITH THE OPERATOR before launch, and delete any that
 // they do not do on every job.
 const included = [
   { t: 'Every gutter run cleared', d: 'Leaf, bark, gumnuts and silt removed from every gutter on the house, not just the ones you can see from the street.' },

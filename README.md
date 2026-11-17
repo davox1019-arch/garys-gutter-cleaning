@@ -61,7 +61,7 @@ rebuilds it.
 - `public/gutter-cleaning-background.webp` is the Melbourne site's homepage
   photo. Replace it with a Perth job photo when one exists.
 - The "What's included" list on suburb pages (`included` in
-  `src/pages/gutter-cleaning-[suburb].astro`) must match what the contractor
+  `src/pages/gutter-cleaning-[suburb].astro`) must match what the operator
   actually does on every job.
 
 - All times shown to the operator or customer are Perth time (`Australia/Perth`),

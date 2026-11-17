@@ -26,7 +26,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: 'Who actually does the work?',
-    a: `${site.name} prepares your quote and books the job. The clean itself is carried out by an independent local gutter cleaning contractor.`,
+    a: `${site.name} prepares your quote and books the job. The clean itself is carried out by an independent local sole operator.`,
   },
   {
     q: 'When is the best time to get gutters cleaned in Perth?',
@@ -62,7 +62,7 @@ const services = [
 
 // Reasons to choose us. No claims we can't stand behind: no years in
 // business, job counts or "most trusted" until they are real and supplied.
-// "Every gutter run, downpipes checked" must match what the contractor does.
+// "Every gutter run, downpipes checked" must match what the operator does.
 const reasons = [
   { icon: '💲', title: 'A firm price, not a range', desc: 'You get one figure for your house, by text, before anyone comes out.' },
   { icon: '🛰️', title: 'No site visit, no waiting in', desc: "We size up the roof, storeys and tree cover on satellite. You don't take a morning off." },
@@ -94,7 +94,7 @@ const groups = [
 
 <Layout
   title={`Gutter Cleaning Perth | From $${fromPrice} | Trusted & Local`}
-  description={`Gutter cleaning Perth from $${fromPrice} ✓ Trusted local contractors ✓ Professional service ✓ Free quote ✓ Gutters, downpipes & gutter guard ✓ Hills, east & north`}
+  description={`Gutter cleaning Perth from $${fromPrice} ✓ Trusted local sole operator ✓ Professional service ✓ Free quote ✓ Gutters, downpipes & gutter guard ✓ Hills, east & north`}
   schema={[
     serviceSchema({
       name: 'Gutter cleaning',
@@ -134,7 +134,7 @@ const groups = [
       <div class="wrap">
         <p class="section-label">What we do</p>
         <h2>Gutter services across Perth</h2>
-        <p class="lede-sm">Gutters, downpipes and gutter guard across Perth, done by independent local contractors. One enquiry covers all of it.</p>
+        <p class="lede-sm">Gutters, downpipes and gutter guard across Perth, done by a trusted local sole operator. One enquiry covers all of it.</p>
         <div class="svc-grid">
           {services.map((s) => (
             <a class="svc-card" href={s.href}>
