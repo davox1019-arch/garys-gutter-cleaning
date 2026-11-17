@@ -77,8 +77,12 @@ const allSchema = noindex
     <meta property="og:image" content={abs('/og-image.png')} />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    {/* Gary's face, built by scripts/make-favicons.mjs. Google uses the
+        48/96px PNGs (square, multiples of 48) for the icon beside results. */}
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     {site.gaMeasurementId && (
       <Fragment>
