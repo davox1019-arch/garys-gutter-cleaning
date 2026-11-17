@@ -1,0 +1,39 @@
+---
+/**
+ * The four price cards, in the Melbourne site's format: icon, tier, "From $X",
+ * a one-line note, and a "Most common" tag on the featured tier. Prices come
+ * from site.config.mjs.
+ */
+import { site } from '../../site.config.mjs';
+
+export interface Props {
+  heading: string;
+  /** Section id for in-page links. */
+  id?: string;
+  enquireHref?: string;
+}
+const { heading, id = 'pricing', enquireHref = '#enquire' } = Astro.props;
+---
+
+<section class="band band-sand" id={id}>
+  <div class="wrap">
+    <p class="section-label">Transparent pricing</p>
+    <h2>{heading}</h2>
+    <p class="pricing-sub">Firm price before we start. No call-out fee. No hidden extras.</p>
+    <div class="price-grid price-grid-4">
+      {site.pricing.tiers.map((t) => (
+        <div class={`price-card${t.featured ? ' featured' : ''}`}>
+          {t.featured && <span class="price-tag">Most common</span>}
+          <span class="price-icon" aria-hidden="true">{t.icon}</span>
+          <p class="price-label">{t.label}</p>
+          <p class="price-amount">From ${t.from}</p>
+          <p>{t.note}</p>
+        </div>
+      ))}
+    </div>
+    <p class="price-small">
+      Price varies with property size, roof access and debris volume. We confirm the price before starting — always.
+    </p>
+    <p class="btn-row" style="margin-top:1.25rem"><a class="btn" href={enquireHref}>✉️ Get my exact price</a></p>
+  </div>
+</section>

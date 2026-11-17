@@ -1,0 +1,136 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import Faq from '../components/Faq.astro';
+import { site } from '../../site.config.mjs';
+import { faqSchema, serviceSchema, type FaqItem } from '../lib/schema';
+
+const faqs: FaqItem[] = [
+  {
+    q: 'How do I know a downpipe is blocked rather than the gutter?',
+    a: 'Watch it in the rain. If water is pouring over the gutter edge directly above a downpipe while little or nothing comes out at the bottom, the pipe is the problem. A gutter that overflows mid-run, away from any downpipe, is more likely full of debris or sagging.',
+  },
+  {
+    q: 'What blocks downpipes in Perth?',
+    a: 'Mostly whatever is big enough to lodge at the first bend. In the Hills and foothills that is often marri fruit, the woody "honky nuts" that can be up to five centimetres long. Jarrah bark, which sheds in long strips, and compacted leaf do the rest.',
+  },
+  {
+    q: 'Water is pooling at the base of the downpipe. Is that a blockage?',
+    a: 'It can be, but in Perth it is often the soakwell rather than the pipe. Most Perth homes send roof water into soakwells buried in the sand rather than to a street drain. A soakwell that has silted up or been invaded by roots stops accepting water, and it backs up at ground level. Clearing the downpipe will not fix that; the soakwell needs attention separately.',
+  },
+  {
+    q: 'How much does downpipe clearing cost?',
+    a: `Downpipes are checked as part of every gutter clean. Clearing a blocked downpipe on its own starts from $${site.pricing.downpipeFrom}. For comparison, national cost guides put unblocking a single downpipe at roughly $40 to $120.`,
+  },
+];
+---
+
+<Layout
+  title={`Downpipe Clearing Perth | Blocked Downpipes From $${site.pricing.downpipeFrom}`}
+  description="Blocked downpipes in Perth cleared with your gutter clean. How to tell a blocked downpipe from a full gutter or a failed soakwell. Firm price by text."
+  crumbs={[{ name: 'Downpipe clearing Perth', href: '/downpipe-clearing-perth/' }]}
+  schema={[
+    serviceSchema({
+      name: 'Downpipe clearing',
+      description: 'Clearing blocked downpipes on Perth homes, quoted together with a gutter clean.',
+      path: '/downpipe-clearing-perth/',
+    }),
+    faqSchema(faqs),
+  ]}
+>
+  <main>
+    <PageHero
+      eyebrow="Blocked Downpipes Perth"
+      badge={`🚰 Downpipe clearing from $${site.pricing.downpipeFrom} · Checked free with every gutter clean`}
+      lead="Blocked downpipes push water back over your gutters and into the eaves — and in Perth the first winter front finds them fast. Downpipes cleared as part of your gutter clean, with a firm price by text."
+      sub={['Downpipes checked every clean', 'Soakwell problems flagged', 'Single & two storey']}
+      secondary={{ href: '#diagnose', label: 'Pipe or soakwell? ↓' }}
+    >
+      Downpipe Clearing <em>Perth</em>
+    </PageHero>
+    <div class="wrap">
+
+    <div class="layout-aside">
+      <article class="prose">
+        <p class="article-intro">The gutter collects the water. The downpipe is the only way out. When it blocks, a perfectly clean gutter still fills to the brim and spills.</p>
+        <h2>Why downpipes block here</h2>
+        <p>
+          Perth roofs spend the summer collecting debris with no rain to move it.
+          When the first heavy front arrives, everything loose in the gutter is
+          washed toward the outlets in one go. Whatever is too big to pass the
+          first bend stops there, and the next handful of leaf packs in behind it.
+        </p>
+        <p>
+          In the suburbs with native canopy, the usual plug is marri fruit. Locals
+          call them honky nuts. They are woody, urn-shaped and up to five
+          centimetres long, which is about the worst possible shape and size for a
+          household downpipe with an elbow in it. Jarrah adds bark in long fibrous strips,
+          and sheoak adds fine needles that mat together like felt.
+        </p>
+
+        <h2 id="diagnose">Three problems that look the same from the ground</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>What you see</th><th>Likely cause</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Overflow right above a downpipe, nothing coming out below</th><td>Blocked downpipe</td></tr>
+              <tr><th scope="row">Overflow part-way along a run</th><td>Gutter full of debris, or sagging between brackets</td></tr>
+              <tr><th scope="row">Water bubbling up or pooling at the base of the pipe</th><td>Soakwell full, silted or root-bound</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>The soakwell question</h2>
+        <p>
+          This is the part that is particular to Perth. On the sandy coastal
+          plain, most houses do not connect their downpipes to a street
+          stormwater drain. The water runs underground to soakwells, perforated
+          chambers buried in the sand, and drains away from there.
+        </p>
+        <p>
+          A soakwell can fail on its own. Years of fine silt washing off the
+          roof, or tree roots finding the moisture, will stop it accepting water.
+          The symptom is water backing up at ground level, and it looks very much
+          like a blocked pipe. If we find the pipe itself is clear and the
+          blockage is below ground, we will tell you. Fixing a soakwell is a
+          separate job from gutter cleaning.
+        </p>
+        <p>
+          It is also the best argument for keeping gutters clean in the first
+          place. Every leaf and nut that does make it down the pipe ends up in
+          the soakwell, and that is far harder to get out.
+        </p>
+
+        <h2>What a blocked downpipe does to a house</h2>
+        <ul>
+          <li>Water overflows the back of the gutter into the eaves and down the fascia.</li>
+          <li>On a tiled roof with low gutters, it can run back under the first course of tiles.</li>
+          <li>Standing water sits in a steel gutter for weeks and rusts it from the inside.</li>
+          <li>Overflow lands in one spot at the base of the wall instead of being carried away.</li>
+        </ul>
+
+        <h2>Getting it cleared</h2>
+        <p>
+          Downpipes are checked as part of a gutter clean, and a blocked one is
+          priced with the job. Send an enquiry for a quote. If you already
+          know which pipe is blocked, you can tell us when we get in touch to
+          arrange a time.
+        </p>
+
+        <h2>Common questions</h2>
+        <Faq items={faqs} />
+
+        <p>
+          See also: <a href="/gutter-cleaning-cost-perth/">what gutter cleaning costs in Perth</a>
+          and <a href="/gutter-guard-perth/">whether gutter guard is worth it</a>.
+        </p>
+      </article>
+
+      <aside>
+        <EnquiryForm heading="Get a price for your house" />
+      </aside>
+    </div>
+    </div>
+  </main>
+</Layout>

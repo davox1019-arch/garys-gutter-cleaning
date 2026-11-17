@@ -1,0 +1,200 @@
+---
+/**
+ * One page per suburb, at /gutter-cleaning-{slug}/. That is the only URL shape
+ * for a suburb on this site: there is no /suburbs/{slug}/ variant and there
+ * must never be a second page competing for the same suburb and service.
+ *
+ * Section order follows the Melbourne suburb pages: photo hero, enquiry form,
+ * what's included, promises, the local write-up, prices, FAQ.
+ *
+ * Links (owner's decision, November 2026): the page links to no other page
+ * on the site except the homepage, through a small visible breadcrumb
+ * ("Home › Gutter cleaning {suburb}") that carries matching BreadcrumbList
+ * schema. The logo opens an on-page menu; every other link is an in-page
+ * anchor, a phone link, or plain text. The footer names the suburb and three
+ * bordering suburbs as plain text.
+ *
+ * Everything in the "local" section comes from the suburb's own entry in
+ * src/data/suburbs.ts.
+ */
+import Layout from '../layouts/Layout.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import PageHero from '../components/PageHero.astro';
+import Faq from '../components/Faq.astro';
+import { site, fromPrice, priceBadge, seoTitle } from '../../site.config.mjs';
+import PriceCards from '../components/PriceCards.astro';
+import { suburbs, type Suburb } from '../data/suburbs';
+import { councils } from '../data/councils';
+import { faqSchema, serviceSchema } from '../lib/schema';
+
+export function getStaticPaths() {
+  return suburbs.map((s) => ({ params: { suburb: s.slug }, props: { s } }));
+}
+
+const { s } = Astro.props as { s: Suburb };
+const council = councils[s.council];
+const path = `/gutter-cleaning-${s.slug}/`;
+const p = site.pricing;
+// Search snippet: keyword + postcode + price first, then the three
+// bordering suburbs, which makes each one unique. Kept under 160 characters.
+const [n1, n2, n3] = s.neighbours;
+const metaDesc = (() => {
+  const base = `Gutter cleaning in ${s.name} ${s.postcode} from $${fromPrice}. Gutters cleared, downpipes checked, firm price by text.`;
+  const full = `${base} Also ${n1}, ${n2} & ${n3}.`;
+  return full.length <= 160 ? full : `${base} Also ${n1} & ${n2}.`.length <= 160 ? `${base} Also ${n1} & ${n2}.` : base;
+})();
+const region = { hills: 'Perth Hills', east: 'Eastern Suburbs', north: 'Northern Suburbs' }[s.group];
+
+// What a clean covers. Every line here is a commitment to customers:
+// CONFIRM EACH ONE WITH THE CONTRACTOR before launch, and delete any that
+// they do not do on every job.
+const included = [
+  { t: 'Every gutter run cleared', d: 'Leaf, bark, gumnuts and silt removed from every gutter on the house, not just the ones you can see from the street.' },
+  { t: 'Downpipes checked', d: 'Each downpipe checked as part of the clean, so the water has somewhere to go when it rains.' },
+  { t: 'Sheds and outbuildings on request', d: 'Patios, sheds and granny flats can be added to the price — mention them in your enquiry.' },
+  { t: 'Anything unusual flagged first', d: 'If the job turns out to be more than the roof showed from above, you are told before any work starts.' },
+];
+
+const menu = [
+  { href: '#enquire', label: 'Enquire now' },
+  { href: '#included', label: "What's included" },
+  { href: `#local`, label: `Gutters in ${s.name}` },
+  { href: '#pricing', label: 'Prices' },
+  { href: '#faq', label: 'FAQ' },
+];
+---
+
+<Layout
+  title={(() => { const t = `Gutter Cleaning ${s.name} | Gutter Cleaners From $${fromPrice}`; return t.length <= 60 ? t : seoTitle(`Gutter Cleaning ${s.name} | From $${fromPrice}`); })()}
+  description={metaDesc}
+  menu={menu}
+  crumbs={[{ name: `Gutter cleaning ${s.name}`, href: path }]}
+  operatingIn={{ suburb: s.name, neighbours: s.neighbours }}
+  schema={[
+    serviceSchema({
+      name: `Gutter cleaning ${s.name}`,
+      description: metaDesc,
+      path,
+      areaName: s.name,
+      postcode: s.postcode,
+      offers: true,
+    }),
+    faqSchema(s.faqs),
+  ]}
+>
+  <main>
+    <PageHero
+      eyebrow={`${region} · ${s.name} WA ${s.postcode}`}
+      badge={priceBadge}
+      lead={`Gutter cleaning in ${s.name}: leaf, bark and gumnuts cleared from every gutter run, downpipes checked, and a firm price texted to you before anyone comes out.`}
+      sub={[`${council.name} area`, 'Firm price by text', 'No site visit needed', 'Single & two storey']}
+      secondary={{ href: '#pricing', label: 'See prices ↓' }}
+    >Gutter Cleaning <em>{s.name}</em></PageHero>
+
+    <section class="quote-band">
+      <div class="wrap">
+        <EnquiryForm suburb={s.name} postcode={s.postcode} heading={`Gutter cleaning in ${s.name}: send an enquiry`} />
+      </div>
+    </section>
+
+    <section class="band" id="included">
+      <div class="wrap">
+        <p class="section-label">What you get</p>
+        <h2>Gutter cleaning in {s.name}: what's included</h2>
+        <div class="included-grid">
+          {included.map((i) => (
+            <div class="included-item"><div><strong>{i.t}</strong><span>{i.d}</span></div></div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-ink">
+      <div class="wrap">
+        <h2>What you can count on</h2>
+        <div class="promise-grid">
+          <div class="promise-item">
+            <h3>A firm price, by text</h3>
+            <p>We check your roof on satellite and text you a fixed price for the job.</p>
+          </div>
+          <div class="promise-item">
+            <h3>Quick replies</h3>
+            <p>Enquiries are answered as they come in during Perth hours.</p>
+          </div>
+          <div class="promise-item">
+            <h3>No obligation</h3>
+            <p>Don't like the price? Ignore the text. Nobody will chase you.</p>
+          </div>
+          <div class="promise-item">
+            <h3>Straight answers</h3>
+            <p>If your house needs more than a standard clean, you hear it before the work, not after.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="local">
+      <div class="wrap">
+        <div class="local-wrap prose">
+          <p class="section-label">Local guide</p>
+          <h2>Gutter cleaning in {s.name} homes</h2>
+          <p class="article-intro">{s.lead}</p>
+
+          <dl class="facts">
+            {s.facts.map((f) => (
+              <div><dt>{f.label}</dt><dd>{f.value}</dd></div>
+            ))}
+          </dl>
+
+          {s.sections.map((sec) => (
+            <Fragment>
+              <h3>{sec.h}</h3>
+              {sec.p.map((para) => <p>{para}</p>)}
+            </Fragment>
+          ))}
+
+          {s.bfp && (
+            <p>
+              {s.bfp} The mapping is done address by address, so check your own
+              on the WA Map of Bush Fire Prone Areas.
+            </p>
+          )}
+
+          {council.gutterQuote && (
+            <div class="note-box">
+              <p>
+                <strong>What the {council.name} notice says.</strong> The {council.noticeName},
+                issued under section 33 of the Bush Fires Act 1954, applies to {council.appliesTo}.
+                Its words on gutters are: “{council.gutterQuote}” Work is due by {council.complyBy} and
+                must be maintained until {council.maintainUntil}. The stated penalty for not complying
+                is {council.penalty}.
+              </p>
+              <p class="small">
+                Councils reissue this notice every year. Read the current
+                notice on the {council.name} website rather than relying on our summary.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <PriceCards heading={`Gutter Cleaning ${s.name} Prices — No Hidden Fees`} />
+
+    <section class="band" id="faq">
+      <div class="wrap">
+        <h2>{s.name} gutter cleaning questions</h2>
+        <Faq items={s.faqs} />
+        <p class="small muted" style="margin-top:1.5rem">{s.sources}</p>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="wrap">
+        <h2>What does your {s.name} roof cost?</h2>
+        <p>Send your suburb and mobile. We'll text a firm price, with no obligation to take it.</p>
+        <a class="btn" href="#enquire">Enquire now →</a>
+      </div>
+    </section>
+  </main>
+</Layout>

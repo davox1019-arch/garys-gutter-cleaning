@@ -1,0 +1,283 @@
+---
+/**
+ * The enquiry form. One per page: it owns the #enquire anchor that the hero,
+ * header and sticky buttons all point at.
+ *
+ * Posts to the Worker (/api/enquiry), which saves it to D1 and then sends the
+ * push alert and email. Nothing here posts to a third-party form service — the
+ * Melbourne site's forms pointed at a host that wasn't there and every
+ * enquiry bounced for months.
+ */
+import { site } from '../../site.config.mjs';
+import { suburbs } from '../data/suburbs';
+
+export interface Props {
+  /** On a suburb page, the suburb field starts filled in with it. */
+  suburb?: string;
+  postcode?: string;
+  heading?: string;
+}
+const { suburb = '', postcode = '', heading = 'Send an enquiry' } = Astro.props;
+const example = suburb
+  ? `e.g. 12 Example St, ${suburb}${postcode ? ' WA ' + postcode : ''}`
+  : 'e.g. 12 Example St, Kalamunda WA 6076';
+const suburbNames = [...suburbs].map((s) => s.name).sort();
+const fmt = (h: number) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
+const hours = `${fmt(site.quoteHours.open)}–${fmt(site.quoteHours.close)} Perth time`;
+const tel = site.phone.replace(/\s/g, '');
+---
+
+<section class="enquiry-box" id="enquire" aria-labelledby="enquire-heading">
+  <h2 id="enquire-heading">{heading}</h2>
+  <p class="qb-sub when-open">
+    Tell us your suburb and we'll text you a firm price. Add the street address
+    and we can check the roof on satellite straight away. Enquiries are
+    answered {hours}.
+  </p>
+  <p class="qb-sub when-away">
+    We're away until <strong data-away-return>next week</strong>. Send your
+    enquiry anyway and you'll hear back as soon as we're back.
+  </p>
+
+  <form id="enq-form" novalidate>
+    <div class="enq-row">
+      <div>
+        <label class="field-label" for="enq-name">Your name</label>
+        <input class="field" id="enq-name" name="name" type="text" required autocomplete="name" />
+      </div>
+      <div>
+        <label class="field-label" for="enq-phone">Mobile</label>
+        <input class="field" id="enq-phone" name="phone" type="tel" inputmode="tel" required autocomplete="tel" placeholder="04XX XXX XXX" />
+      </div>
+    </div>
+    <label class="field-label" for="enq-suburb">Suburb</label>
+    <input class="field" id="enq-suburb" name="suburb" type="text" required
+           autocomplete="address-level2" list="enq-suburbs" value={suburb}
+           placeholder="e.g. Kalamunda" />
+    <datalist id="enq-suburbs">
+      {suburbNames.map((n) => <option value={n} />)}
+    </datalist>
+    <label class="field-label" for="enq-address">Street address <span class="muted">(optional — for a faster price)</span></label>
+    <div class="qb-ac">
+      <input class="field" id="enq-address" name="address" type="text"
+             autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"
+             aria-controls="enq-suggest" placeholder={example} />
+      <ul class="qb-suggest" id="enq-suggest" role="listbox" aria-label="Address suggestions" hidden></ul>
+    </div>
+    <label class="field-label" for="enq-message">Anything we should know? <span class="muted">(optional)</span></label>
+    <textarea class="field enq-message" id="enq-message" name="message" rows="3"
+              placeholder="e.g. two storey, big marri out the back, gutter guard fitted"></textarea>
+    <input class="qb-hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+    <button class="btn btn-block" type="submit" id="enq-submit">Send enquiry →</button>
+    <p class="qb-err" id="enq-err" role="alert" hidden></p>
+    {tel && (
+      <p class="qb-note when-open">
+        Rather talk? <a href={`tel:${tel}`}>Call</a> or <a href={`sms:${tel}`}>text</a> {site.phone}.
+      </p>
+    )}
+  </form>
+
+  <div class="enq-done" id="enq-done" role="status" tabindex="-1" hidden>
+    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="#a6e22e" stroke="#0b2a10" stroke-width="3"></circle>
+      <path d="M20 32 L28 40 L44 24" stroke="#0b2a10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <h3>Thanks — your enquiry is in</h3>
+    <p class="when-open">We'll text your price to <strong id="enq-done-phone"></strong>.</p>
+    <p class="when-away">We're away until <span data-away-return>next week</span> and will text <strong class="enq-done-phone2"></strong> as soon as we're back.</p>
+  </div>
+</section>
+
+<script is:inline>
+  (function () {
+    var form = document.getElementById('enq-form');
+    if (!form) return;
+
+    // --- address autocomplete ------------------------------------------
+    // Purely an assist: if the lookup is unavailable the field is still an
+    // ordinary text box and the form sends whatever was typed.
+    var input = document.getElementById('enq-address');
+    var list = document.getElementById('enq-suggest');
+    var items = [];
+    var active = -1;
+    var debounce = null;
+    var session = '';
+    var lastQuery = '';
+
+    // Google rejects anything that is not a real UUID, so there is no
+    // home-made fallback: without randomUUID the token is simply left out.
+    function newSession() {
+      try { session = crypto.randomUUID(); } catch (e) { session = ''; }
+    }
+    newSession();
+
+    function close() {
+      list.hidden = true;
+      list.innerHTML = '';
+      items = [];
+      active = -1;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+    }
+
+    function highlight(i) {
+      var nodes = list.querySelectorAll('li');
+      for (var n = 0; n < nodes.length; n++) nodes[n].setAttribute('aria-selected', n === i ? 'true' : 'false');
+      active = i;
+      if (i >= 0 && nodes[i]) {
+        input.setAttribute('aria-activedescendant', nodes[i].id);
+        nodes[i].scrollIntoView({ block: 'nearest' });
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    // Did the person type the suburb themselves? A pre-filled suburb (on a
+    // suburb page) or one filled from an earlier pick can be replaced; one
+    // they typed is left alone.
+    var suburbTyped = false;
+    form.elements.suburb.addEventListener('input', function () { suburbTyped = true; });
+
+    function choose(value) {
+      input.value = value;
+      // "12 Haynes Street, Kalamunda WA" — take the suburb from the address.
+      var sub = form.elements.suburb;
+      var m = /,\s*([^,]+?)\s+(?:WA|Western Australia)\b/i.exec(value);
+      if (sub && m && (!suburbTyped || !sub.value.trim())) {
+        sub.value = m[1];
+        sub.removeAttribute('aria-invalid');
+      }
+      close();
+      newSession();
+      input.focus();
+    }
+
+    function render(suggestions) {
+      if (!suggestions.length) return close();
+      items = suggestions;
+      list.innerHTML = suggestions
+        .map(function (t, i) { return '<li id="enq-opt-' + i + '" role="option" aria-selected="false"></li>'; })
+        .join('');
+      var nodes = list.querySelectorAll('li');
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].textContent = suggestions[i];
+        (function (val) {
+          nodes[i].addEventListener('mousedown', function (ev) { ev.preventDefault(); choose(val); });
+        })(suggestions[i]);
+      }
+      list.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+      highlight(-1);
+    }
+
+    function lookup() {
+      var q = input.value.trim();
+      if (q.length < 4 || q === lastQuery) return;
+      lastQuery = q;
+      fetch('/api/address?q=' + encodeURIComponent(q) + '&s=' + encodeURIComponent(session))
+        .then(function (r) { return r.ok ? r.json() : { suggestions: [] }; })
+        .then(function (d) {
+          if (input.value.trim() !== q) return;
+          render(d.suggestions || []);
+        })
+        .catch(function () { close(); });
+    }
+
+    input.addEventListener('input', function () {
+      clearTimeout(debounce);
+      if (input.value.trim().length < 4) return close();
+      debounce = setTimeout(lookup, 250);
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (list.hidden || !items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); highlight((active + 1) % items.length); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); highlight((active - 1 + items.length) % items.length); }
+      else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); choose(items[active]); }
+      else if (e.key === 'Escape') { close(); }
+    });
+
+    input.addEventListener('blur', function () { setTimeout(close, 120); });
+
+    // --- submit ---------------------------------------------------------
+    var LABEL = 'Send enquiry →';
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = document.getElementById('enq-submit');
+      var err = document.getElementById('enq-err');
+      var data = {
+        name: form.elements.name.value.trim(),
+        phone: form.elements.phone.value.trim(),
+        suburb: form.elements.suburb.value.trim(),
+        address: input.value.trim(),
+        message: form.elements.message.value.trim(),
+        company: form.elements.company.value,
+        page: location.pathname
+      };
+      err.hidden = true;
+      ['name', 'phone', 'suburb'].forEach(function (n) { form.elements[n].removeAttribute('aria-invalid'); });
+      var bad =
+        !data.name ? ['name', 'Please enter your name.'] :
+        data.phone.replace(/\D/g, '').length < 8 ? ['phone', 'Please enter a valid mobile number.'] :
+        data.suburb.length < 2 ? ['suburb', 'Please enter your suburb.'] : null;
+      if (bad) {
+        // Show the message and put the cursor in the field that needs fixing.
+        var field = form.elements[bad[0]];
+        err.textContent = bad[1];
+        // Right under the field, so it is on screen when the field gets focus.
+        field.insertAdjacentElement('afterend', err);
+        err.hidden = false;
+        field.setAttribute('aria-invalid', 'true');
+        field.setAttribute('aria-describedby', 'enq-err');
+        field.focus();
+        return;
+      }
+      // Server and connection errors belong under the Send button.
+      btn.insertAdjacentElement('afterend', err);
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      fetch('/api/enquiry', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        // A non-JSON reply (an error page, a dropped connection) must not show
+        // the browser's raw error text — only the server's own message.
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; });
+        })
+        .then(function (res) {
+          if (!res.ok || !res.d || !res.d.ok) {
+            var e = new Error((res.d && res.d.error) || '');
+            e.fromServer = true;
+            throw e;
+          }
+          form.hidden = true;
+          var done = document.getElementById('enq-done');
+          document.getElementById('enq-done-phone').textContent = data.phone;
+          var p2 = done.querySelector('.enq-done-phone2');
+          if (p2) p2.textContent = data.phone;
+          done.hidden = false;
+          try { done.focus({ preventScroll: true }); } catch (e3) { done.focus(); }
+          done.scrollIntoView({ block: 'center' });
+          if (window.gtag) window.gtag('event', 'generate_lead');
+        })
+        .catch(function (e2) {
+          btn.disabled = false;
+          btn.textContent = LABEL;
+          err.textContent = (e2 && e2.fromServer && e2.message) ||
+            'That did not send. Please check your connection and try again.';
+          err.hidden = false;
+        });
+    });
+
+    // A page restored from the back-forward cache keeps the button in its
+    // "Sending…" state. Reset it.
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      var btn = document.getElementById('enq-submit');
+      btn.disabled = false;
+      btn.textContent = LABEL;
+    });
+  })();
+</script>

@@ -1,0 +1,69 @@
+---
+import { site } from '../../site.config.mjs';
+
+export interface Props {
+  bare?: boolean;
+  /** Suburb pages: no links at all — the business disclosure, the suburbs
+   *  served, and the legal line. */
+  landing?: boolean;
+  operatingIn?: { suburb: string; neighbours: string[] };
+}
+const { bare = false, landing = false, operatingIn } = Astro.props;
+const areaLine = operatingIn
+  ? `${operatingIn.suburb} and nearby ${operatingIn.neighbours.slice(0, -1).join(', ')} and ${operatingIn.neighbours[operatingIn.neighbours.length - 1]}`
+  : '';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    {landing && (
+      <div class="footer-landing">
+        <img src="/logo-360.webp" srcset="/logo-360.webp 360w, /logo-720.webp 720w" sizes="201px"
+             width="2000" height="637" alt={site.name} loading="lazy" />
+        {areaLine && (
+          <p class="footer-area">📍 Operating in <strong>{areaLine}</strong>.</p>
+        )}
+        <p>
+          Gutter cleaning for Perth homes, priced from satellite imagery.
+          Quotes are prepared by {site.name}; the work is carried out by an
+          independent local gutter cleaning contractor.
+        </p>
+        {site.phone && <p class="when-open"><a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a></p>}
+        {site.email && <p><a href={`mailto:${site.email}`}>{site.email}</a></p>}
+      </div>
+    )}
+    {!bare && !landing && (
+      <div class="footer-grid">
+        <div>
+          <a class="footer-logo" href="/">
+            <img src="/logo-360.webp" srcset="/logo-360.webp 360w, /logo-720.webp 720w" sizes="201px"
+                 width="2000" height="637" alt={site.name} loading="lazy" />
+          </a>
+          <p>
+            Gutter cleaning for Perth homes, priced from satellite imagery.
+            Quotes are prepared by {site.name}; the work is carried out by an
+            independent local gutter cleaning contractor.
+          </p>
+          {site.phone && <p class="when-open"><a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a></p>}
+          {site.email && <p><a href={`mailto:${site.email}`}>{site.email}</a></p>}
+        </div>
+        <div>
+          <h2>Services</h2>
+          <ul>
+            <li><a href="/">Gutter cleaning Perth</a></li>
+            <li><a href="/gutter-cleaning-cost-perth/">Gutter cleaning cost</a></li>
+            <li><a href="/downpipe-clearing-perth/">Downpipe clearing</a></li>
+            <li><a href="/gutter-guard-perth/">Gutter guard</a></li>
+            <li><a href="/service-areas/">Service areas</a></li>
+          </ul>
+        </div>
+      </div>
+    )}
+    <div class="footer-legal">
+      <span>© {year} {site.name}</span>
+      {site.abn && <span>ABN {site.abn}</span>}
+      {!landing && <a href="/privacy/">Privacy</a>}
+    </div>
+  </div>
+</footer>

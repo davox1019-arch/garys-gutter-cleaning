@@ -1,0 +1,298 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import PageHero from '../components/PageHero.astro';
+import Faq from '../components/Faq.astro';
+import { site, fromPrice, priceBadge, priceSentence } from '../../site.config.mjs';
+import { suburbs } from '../data/suburbs';
+import { faqSchema, serviceSchema, type FaqItem, websiteSchema } from '../lib/schema';
+
+// Bureau of Meteorology, Perth Metro (station 009225), mean monthly rainfall
+// in mm, all years of record to November 2026.
+const rain = [
+  ['Jan', 15.9], ['Feb', 12.5], ['Mar', 21.6], ['Apr', 35.2], ['May', 84.5], ['Jun', 126.9],
+  ['Jul', 144.3], ['Aug', 124.3], ['Sep', 78.7], ['Oct', 40.0], ['Nov', 24.0], ['Dec', 9.6],
+] as const;
+const peak = 144.3;
+
+const faqs: FaqItem[] = [
+  {
+    q: 'How much does gutter cleaning cost in Perth?',
+    a: `Gutter cleaning in Perth starts ${priceSentence}. The final price depends on the size of the house, roof access and how much has built up. Send an enquiry and you get a firm figure for your own roof, by text.`,
+  },
+  {
+    q: 'How do I get a price?',
+    a: 'Send an enquiry with your name, mobile and suburb — add the street address if you want the fastest price. We look at the house on satellite imagery — roof size, number of storeys, how much tree cover is over it — and text you a firm price. If you like it, reply and a day is arranged. If you do not, ignore it and that is the end of it.',
+  },
+  {
+    q: 'Who actually does the work?',
+    a: `${site.name} prepares your quote and books the job. The clean itself is carried out by an independent local gutter cleaning contractor.`,
+  },
+  {
+    q: 'When is the best time to get gutters cleaned in Perth?',
+    a: 'Late summer to mid-autumn, before the winter rain arrives. Perth gets very little rain from November to March, so gutters quietly fill with leaf, bark and gumnuts for months, and then the weather turns: the long-term average jumps from about 35 mm in April to about 85 mm in May and peaks at about 144 mm in July. In the Hills there is a second date that matters, because the council fire notices require gutters to be clear from November through to the end of March.',
+  },
+  {
+    q: 'Is gutter cleaning a legal requirement in Western Australia?',
+    a: 'There is no statewide law that names gutter cleaning. What exists is section 33 of the Bush Fires Act 1954, which lets each council issue a fire hazard notice to property owners, and what that notice requires depends on the council. For 2026/27 the City of Kalamunda, Shire of Mundaring and City of Armadale notices each say gutters must be kept free of flammable matter, with penalties of up to $5,000 for not complying. The City of Swan notice does not mention gutters. Check the current notice for your own council rather than relying on a summary, including this one.',
+  },
+  {
+    q: 'How often do gutters need cleaning?',
+    a: 'It depends almost entirely on what is growing over the roof. A house with no trees nearby can go a year or more. A house under jarrah, marri or tuart usually needs doing at least once a year, and homes in the Hills that have to meet a council fire notice often need a second clean before November.',
+  },
+];
+
+const fmtHour = (h: number) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
+const hoursText = `${fmtHour(site.quoteHours.open)}–${fmtHour(site.quoteHours.close)} Perth time`;
+
+// Trust strip under the hero. Every line must stay true.
+const trust = [
+  `From $${fromPrice}`,
+  'Firm price by text',
+  'No site visit needed',
+  'Hills, east & north',
+];
+
+const services = [
+  { icon: '🏠', title: 'Gutter cleaning', desc: 'Leaf, bark, gumnuts and silt cleared from every gutter run, single and two storey.', price: `From $${fromPrice}`, href: '/gutter-cleaning-cost-perth/' },
+  { icon: '🚰', title: 'Downpipe clearing', desc: 'Blocked downpipes cleared so the water reaches the soakwell, not your eaves.', price: `From $${site.pricing.downpipeFrom}`, href: '/downpipe-clearing-perth/' },
+  { icon: '🛡️', title: 'Gutter guard', desc: "Metal mesh that keeps the bulk of the leaf out. Where it pays off, and where it doesn't.", price: 'Quote by text', href: '/gutter-guard-perth/' },
+  { icon: '🔥', title: 'Fire notice cleans', desc: 'Kalamunda, Mundaring and Armadale notices name gutters. Get them clear before the date.', price: 'Hills properties', href: '/gutter-cleaning-kalamunda/' },
+];
+
+// Reasons to choose us. No claims we can't stand behind: no years in
+// business, job counts or "most trusted" until they are real and supplied.
+// "Every gutter run, downpipes checked" must match what the contractor does.
+const reasons = [
+  { icon: '💲', title: 'A firm price, not a range', desc: 'You get one figure for your house, by text, before anyone comes out.' },
+  { icon: '🛰️', title: 'No site visit, no waiting in', desc: "We size up the roof, storeys and tree cover on satellite. You don't take a morning off." },
+  { icon: '🌿', title: 'Every gutter run, downpipes checked', desc: 'The whole house, not just the gutters you can see from the street.' },
+  { icon: '📋', title: 'We know the Hills rules', desc: 'Council fire notices quoted word for word on every Hills suburb page, with the dates.' },
+  { icon: '🕐', title: 'Perth hours, Perth time', desc: `Enquiries are answered ${hoursText}. No east-coast call centre.` },
+  { icon: '🤝', title: 'No obligation, no chasing', desc: "Don't like the price? Ignore the text. Nobody will follow you up." },
+];
+
+const steps = [
+  { title: 'Send an enquiry', desc: 'Name, mobile and suburb. Add the street address for a faster price. Under a minute.' },
+  { title: 'Get a firm price by text', desc: 'We check the roof on satellite and text you a fixed price for the job.' },
+  { title: "Reply, and it's booked", desc: 'Happy with it? Reply and a day is arranged. Gutters cleared, downpipes checked.' },
+];
+
+const guides = [
+  { icon: '💰', title: 'Gutter cleaning cost Perth 2026', desc: 'Our prices, what other Perth operators publish, and what moves a price up.', href: '/gutter-cleaning-cost-perth/' },
+  { icon: '🚰', title: 'Blocked downpipe or full soakwell?', desc: 'Three problems that look the same from the ground, and how to tell them apart.', href: '/downpipe-clearing-perth/' },
+  { icon: '🛡️', title: 'Is gutter guard worth it in Perth?', desc: "Which mesh suits jarrah, marri and sheoak, and why it doesn't satisfy a fire notice.", href: '/gutter-guard-perth/' },
+  { icon: '🔥', title: 'Kalamunda fire notice and your gutters', desc: 'What the City of Kalamunda notice says, word for word, and when it applies.', href: '/gutter-cleaning-kalamunda/' },
+];
+
+const groups = [
+  { key: 'hills', title: 'Perth Hills' },
+  { key: 'east', title: 'Eastern suburbs and foothills' },
+  { key: 'north', title: 'Northern suburbs' },
+] as const;
+---
+
+<Layout
+  title={`Gutter Cleaning Perth | From $${fromPrice} | ${site.name}`}
+  description={`Gutter cleaning in Perth from $${fromPrice} single storey. Gutters, downpipes and gutter guard across the Hills, eastern and northern suburbs. Firm price by text.`}
+  schema={[
+    serviceSchema({
+      name: 'Gutter cleaning',
+      description: 'Gutter cleaning for houses across the Perth metropolitan area, priced from satellite imagery of the property.',
+      path: '/',
+      offers: true,
+    }),
+    faqSchema(faqs),
+    websiteSchema(),
+  ]}
+>
+  <main>
+    <PageHero
+      wide
+      eyebrow="Gutter Cleaning Across Perth"
+      badge={priceBadge}
+      lead="Gutter cleaning across Perth's Hills, eastern and northern suburbs. Gutters, downpipes and gutter guard — priced from your roof on satellite and texted to you as a firm price."
+      sub={['Firm price by text', 'No site visit needed', 'Single & two storey', 'No obligation']}
+      secondary={{ href: '/gutter-cleaning-cost-perth/', label: 'See prices →' }}
+    >
+      Gutter Cleaning <em>Perth</em>
+    </PageHero>
+
+    <div class="trust-strip">
+      <div class="wrap trust-inner">
+        {trust.map((t) => <span class="trust-item">{t}</span>)}
+      </div>
+    </div>
+
+    <section class="quote-band">
+      <div class="wrap">
+        <EnquiryForm heading="Get a firm price by text" />
+      </div>
+    </section>
+
+    <section class="band" id="services">
+      <div class="wrap">
+        <p class="section-label">What we do</p>
+        <h2>Gutter services across Perth</h2>
+        <p class="lede-sm">Local Perth gutter cleaners for gutters, downpipes and gutter guard. One enquiry covers all of it.</p>
+        <div class="svc-grid">
+          {services.map((s) => (
+            <a class="svc-card" href={s.href}>
+              <span class="svc-icon" aria-hidden="true">{s.icon}</span>
+              <span class="svc-title">{s.title}</span>
+              <span class="svc-desc">{s.desc}</span>
+              <span class="svc-price">{s.price}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-ink" id="why">
+      <div class="wrap">
+        <p class="section-label on-dark">Why Perth homeowners use us</p>
+        <h2>Straight prices, no runaround</h2>
+        <div class="reason-grid">
+          {reasons.map((r) => (
+            <div class="rc">
+              <span class="rc-icon" aria-hidden="true">{r.icon}</span>
+              <div>
+                <h3 class="rc-title">{r.title}</h3>
+                <p class="rc-desc">{r.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="how">
+      <div class="wrap">
+        <p class="section-label">How it works</p>
+        <h2>Three steps to clean gutters</h2>
+        <ol class="steps steps-3">
+          {steps.map((s) => (
+            <li><h3>{s.title}</h3><p>{s.desc}</p></li>
+          ))}
+        </ol>
+        <p class="center-cta"><a class="btn" href="#enquire">Enquire now →</a></p>
+      </div>
+    </section>
+
+    {site.reviews.length > 0 && (
+      <section class="band band-sand" id="reviews">
+        <div class="wrap">
+          <p class="section-label">Reviews</p>
+          <h2>What Perth customers say</h2>
+          <div class="review-grid">
+            {site.reviews.map((r: any) => (
+              <figure class="review">
+                <div class="review-stars" aria-label="5 stars">★★★★★</div>
+                <blockquote>{r.text}</blockquote>
+                <figcaption>— {r.name}{r.suburb ? `, ${r.suburb}` : ''}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="band band-sand" id="timing">
+      <div class="wrap split">
+        <div>
+          <p class="section-label">Why Perth gutters block</p>
+          <h2>Dry for five months, then the whole winter at once</h2>
+          <p>
+            December averages under 10 mm of rain in Perth; July averages more
+            than 144 mm. All summer, eucalypts drop leaf, bark and gumnuts onto
+            the roof and nothing washes it away. Then the first fronts arrive in
+            May and the gutter overflows on its first real test.
+          </p>
+          <div class="date-cards">
+            <div class="date-card">
+              <span class="date-when">March–April</span>
+              <span class="date-what">Clean before the winter rain arrives in May.</span>
+            </div>
+            <div class="date-card">
+              <span class="date-when">By 1 November</span>
+              <span class="date-what">Kalamunda and Mundaring fire notices require clear gutters (Armadale: 30 Nov).</span>
+            </div>
+          </div>
+        </div>
+        <figure class="rain" aria-label="Perth mean monthly rainfall">
+          <div class="rain-bars">
+            {rain.map(([m, mm]) => (
+              <div class="rain-col">
+                <span class="rain-val">{Math.round(mm)}</span>
+                <span class="rain-bar" style={`height:${Math.max(3, (mm / peak) * 100)}%`}></span>
+                <span class="rain-m">{m}</span>
+              </div>
+            ))}
+          </div>
+          <figcaption class="small muted">
+            Mean monthly rainfall (mm), Perth Metro station 009225. Bureau of
+            Meteorology, accessed November 2026.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="guides">
+      <div class="wrap">
+        <p class="section-label">Guides</p>
+        <h2>Helpful gutter guides</h2>
+        <div class="guide-grid">
+          {guides.map((g) => (
+            <a class="guide-card" href={g.href}>
+              <span class="guide-icon" aria-hidden="true">{g.icon}</span>
+              <span>
+                <span class="guide-title">{g.title}</span>
+                <span class="guide-desc">{g.desc}</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-sand" id="areas">
+      <div class="wrap">
+        <p class="section-label">Service areas</p>
+        <h2>Gutter cleaning across Perth</h2>
+        <p class="lede-sm">
+          We quote anywhere in the metro area. These suburbs have a local guide
+          of their own.
+        </p>
+        <div class="region-grid">
+          {groups.map((g) => (
+            <div class="region">
+              <h3>{g.title}</h3>
+              <ul>
+                {suburbs.filter((s) => s.group === g.key).map((s) => (
+                  <li><a href={`/gutter-cleaning-${s.slug}/`}>{s.name}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p style="margin-top:1.25rem"><a href="/service-areas/">All service areas →</a></p>
+      </div>
+    </section>
+
+    <section class="band" id="faq">
+      <div class="wrap">
+        <p class="section-label">FAQ</p>
+        <h2>Gutter cleaning questions</h2>
+        <Faq items={faqs} />
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="wrap">
+        <h2>Get your gutters sorted before winter</h2>
+        <p>Send your suburb and mobile. We'll text a firm price, with no obligation to take it.</p>
+        <a class="btn" href="#enquire">Enquire now →</a>
+      </div>
+    </section>
+  </main>
+</Layout>

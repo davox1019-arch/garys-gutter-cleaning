@@ -1,0 +1,24 @@
+{
+  "name": "garys-gutter-cleaning-perth",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "worker": "npm run build && wrangler dev",
+    "db:local": "wrangler d1 execute garys-gutter-cleaning-perth-quotes --local --file worker/schema.sql",
+    "setup:quotes": "node scripts/setup-quotes.mjs",
+    "setup:push": "node scripts/setup-push.mjs",
+    "deploy": "npm run build && npx wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
+    "@fontsource/barlow": "^5.3.0",
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.59.0"
+  }
+}

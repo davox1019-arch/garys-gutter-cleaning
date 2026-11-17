@@ -1,0 +1,56 @@
+---
+/**
+ * The hero used on every public page, in the Melbourne site's format:
+ *
+ *   eyebrow (location)      e.g. "Gutter Cleaning Across Perth"
+ *   H1 (the page keyword)   e.g. "Gutter Cleaning Kalamunda"
+ *   price badge             "🏠 Units from $199 · Houses from $249 · …"
+ *   lead                    keyword + place + what's included + price
+ *   sub                     trust points separated by "·"
+ *   buttons                 "✉️ Send an Enquiry" + one page-specific button
+ *   phone line              "📞 Call or 💬 text …" once site.phone is set
+ *
+ * All of it sits in a see-through green box over the gutter photo. The phone
+ * line carries .when-open, so away mode hides it.
+ */
+import { site } from '../../site.config.mjs';
+
+export interface Props {
+  eyebrow?: string;
+  badge?: string;
+  lead?: string;
+  /** Trust points, joined with " · ". */
+  sub?: string[];
+  /** The second button, e.g. { href: '#pricing', label: 'See prices ↓' }. */
+  secondary?: { href: string; label: string };
+  /** Where Enquire goes. Pages without their own form send people elsewhere. */
+  enquireHref?: string;
+  wide?: boolean;
+}
+const { eyebrow, badge, lead, sub = [], secondary, enquireHref = '#enquire', wide = false } = Astro.props;
+const tel = site.phone.replace(/\s/g, '');
+---
+
+<section class="hero hero-photo">
+  <div class="wrap">
+    <div class={`hero-glass${wide ? ' hero-glass--wide' : ''}`}>
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      <h1><slot /></h1>
+      {badge && <p class="price-badge">{badge}</p>}
+      {lead && <p class="hero-lead">{lead}</p>}
+      {!lead && Astro.slots.has('lead') && <p class="hero-lead"><slot name="lead" /></p>}
+      {sub.length > 0 && <p class="hero-sub">{sub.join(' · ')}</p>}
+      <slot name="extra" />
+      <div class="btn-row hero-ctas">
+        <a class="btn" href={enquireHref}>✉️ Send an Enquiry</a>
+        {secondary && <a class="btn btn-outline-light" href={secondary.href}>{secondary.label}</a>}
+      </div>
+      {tel && (
+        <p class="hero-phone when-open">
+          <a href={`tel:${tel}`}>📞 Call</a> or <a href={`sms:${tel}`}>💬 text</a> {site.phone}
+        </p>
+      )}
+      <p class="hero-away when-away">We're away until <strong data-away-return>next week</strong> — enquiries still come through and you'll hear back when we're back.</p>
+    </div>
+  </div>
+</section>

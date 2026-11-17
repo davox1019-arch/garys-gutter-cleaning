@@ -1,0 +1,132 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import Faq from '../components/Faq.astro';
+import { site } from '../../site.config.mjs';
+import { faqSchema, serviceSchema, type FaqItem } from '../lib/schema';
+
+const faqs: FaqItem[] = [
+  {
+    q: 'Does gutter guard mean I never have to clean my gutters again?',
+    a: 'No. It means you clean them much less often. Mesh stops leaves, bark and nuts, but fine material — dust, pollen, shredded leaf, grit off the roof — still gets through and slowly builds up as silt underneath. Leaf also collects on top of the mesh and needs brushing off. Expect to check it once a year.',
+  },
+  {
+    q: 'Does gutter guard satisfy a council fire notice?',
+    a: 'Not by itself. The Kalamunda, Mundaring and Armadale notices require gutters and roofs to be free of flammable matter. A layer of dry leaf sitting on top of the mesh is still flammable matter on your roof. Guard makes that requirement easier to meet, because there is far less to clear and it is easier to reach, but it does not meet it for you.',
+  },
+  {
+    q: 'What kind of gutter guard is suitable in a bushfire-prone area?',
+    a: 'Metal mesh, not plastic. The Australian Standard for building in bushfire-prone areas, AS 3959, requires gutter and valley leaf guards, where they are fitted, to be non-combustible. Even where the standard does not apply to your house, plastic mesh on a roof in the Hills is a poor idea.',
+  },
+  {
+    q: 'How much does gutter guard cost in Perth?',
+    a: 'It is quoted per property, because it depends on the length of gutter, the roof type and the mesh. Send an enquiry and mention gutter guard in the message, and the price will cover your actual roof.',
+  },
+];
+---
+
+<Layout
+  title={`Gutter Guard Installation Perth | ${site.name}`}
+  description="Gutter guard installation in Perth for homes under jarrah, marri and sheoak. What it does, whether it meets a fire notice, and a firm price by text."
+  crumbs={[{ name: 'Gutter guard Perth', href: '/gutter-guard-perth/' }]}
+  schema={[
+    serviceSchema({
+      name: 'Gutter guard installation',
+      description: 'Supply and installation of gutter guard mesh on Perth homes, quoted per property.',
+      path: '/gutter-guard-perth/',
+    }),
+    faqSchema(faqs),
+  ]}
+>
+  <main>
+    <PageHero
+      eyebrow="Gutter Guard Perth"
+      badge="🛡️ Supply & installation · Quote by text"
+      lead="Gutter guard installation for Perth homes under jarrah, marri and sheoak. Fewer cleans and fewer blocked downpipes — and a straight answer on whether your roof actually needs it."
+      sub={['Single & two storey', 'Firm price by text', 'No obligation']}
+      secondary={{ href: '#worth', label: 'Is it worth it? ↓' }}
+    >
+      Gutter Guard Installation <em>Perth</em>
+    </PageHero>
+    <div class="wrap">
+
+    <div class="layout-aside">
+      <article class="prose">
+        <p class="article-intro">Gutter guard is worth having on some Perth houses and a waste of money on others. The difference is the trees over the roof.</p>
+        <h2>What it does, plainly</h2>
+        <p>
+          Gutter guard is a mesh fixed over the gutter, usually running from the
+          gutter lip up under the first row of tiles or onto the roof sheet.
+          Water goes through. Leaves, bark and nuts stay on top, where wind
+          clears some of them and the rest can be brushed off.
+        </p>
+        <p>
+          It does not make gutters maintenance-free. Fine debris passes through
+          any mesh, and over a few years it settles into a layer of silt in the
+          bottom of the gutter. Cleaning that out means lifting the guard, which
+          costs more than cleaning an open gutter. So the sum is: fewer cleans,
+          but each one is a bigger job.
+        </p>
+
+        <h2 id="worth">When it earns its keep</h2>
+        <ul>
+          <li><strong>Heavy native canopy directly over the roof.</strong> If the gutters fill within months of a clean, guard changes that to years.</li>
+          <li><strong>Two-storey homes and steep roofs,</strong> where every clean is expensive and nobody should be up there casually.</li>
+          <li><strong>Homes covered by a Hills council fire notice,</strong> where gutters have to be kept free of flammable matter from November to the end of March. Guard makes that a quick brush-off rather than a full clean.</li>
+          <li><strong>Marri overhead.</strong> Honky nuts are the classic downpipe plug, and mesh keeps them out of the pipe entirely.</li>
+        </ul>
+
+        <h2>When it does not</h2>
+        <ul>
+          <li><strong>No trees within reach of the roof.</strong> A clean every year or two costs less than the guard ever will.</li>
+          <li><strong>Sheoak or pine close to the house, with coarse mesh.</strong> Needles are fine enough to thread through a wide aperture and mat underneath. If needles are the problem, the mesh has to be a fine one.</li>
+          <li><strong>Gutters that are already rusted or sagging.</strong> Fix or replace the gutter first; guard over a failing gutter just hides it.</li>
+        </ul>
+
+        <h2>Choosing mesh for Perth conditions</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>What is falling on the roof</th><th>What to look for</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Jarrah and marri leaf, bark, honky nuts</th><td>Metal mesh; aperture matters less because the debris is large</td></tr>
+              <tr><th scope="row">Sheoak or pine needles</th><td>Fine-aperture metal mesh, fitted with enough fall to shed</td></tr>
+              <tr><th scope="row">Anything, in a bushfire-prone area</th><td>Non-combustible metal mesh. Not plastic.</td></tr>
+              <tr><th scope="row">Near the coast</th><td>Aluminium, or steel with a coating rated for marine exposure</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note-box">
+          <p>
+            <strong>On bushfire claims.</strong> You will see gutter guard sold in
+            Perth as "ember protection". Metal mesh does stop leaf building up
+            where an ember could land, and that is a real benefit. It is not a
+            fire rating for your house, and it does not replace the clearing your
+            council's notice requires.
+          </p>
+        </div>
+
+        <h2>Getting a price</h2>
+        <p>
+          Gutter guard is quoted per property. Send an enquiry for a gutter
+          cleaning price, then tell us you are interested in guard when we get in
+          touch. The gutters need to be cleaned before guard goes on in any case.
+        </p>
+
+        <h2>Common questions</h2>
+        <Faq items={faqs} />
+
+        <p>
+          See also: <a href="/gutter-cleaning-cost-perth/">gutter cleaning cost in Perth</a>
+          and <a href="/downpipe-clearing-perth/">downpipe clearing</a>.
+        </p>
+      </article>
+
+      <aside>
+        <EnquiryForm heading="Get a gutter guard price" />
+      </aside>
+    </div>
+    </div>
+  </main>
+</Layout>

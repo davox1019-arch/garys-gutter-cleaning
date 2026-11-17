@@ -1,0 +1,146 @@
+---
+// Barlow: heavy italic for headings and buttons to match the logo lettering.
+import '@fontsource/barlow/400.css';
+import '@fontsource/barlow/500.css';
+import '@fontsource/barlow/700.css';
+import '@fontsource/barlow/700-italic.css';
+import '@fontsource/barlow/800-italic.css';
+import '@fontsource/barlow/900-italic.css';
+import '../styles/global.css';
+
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../../site.config.mjs';
+import { abs, businessSchema, breadcrumbSchema, type Crumb } from '../lib/schema';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Trail AFTER Home, ending with the current page. Drives BOTH the visible
+   *  breadcrumb and the BreadcrumbList schema, so the two cannot drift apart
+   *  and marked-up breadcrumbs are always visible to the reader. */
+  crumbs?: Crumb[];
+  schema?: object | object[];
+  /** Quote pages hold customer addresses — they must never reach the index. */
+  noindex?: boolean;
+  /** Quote and admin pages: logo only, no nav, no footer link block, no CTA. */
+  bare?: boolean;
+  /** Suburb pages: the logo opens this on-page menu instead of linking home,
+   *  and the footer carries no site-wide link block. Pass no `crumbs` with it:
+   *  breadcrumb schema is only emitted when the breadcrumb is visible. */
+  menu?: { href: string; label: string }[];
+  /** Where the sticky Enquire button goes; pages without a form override it. */
+  enquireHref?: string;
+  /** Suburb pages: the footer says "Operating in X and nearby A, B and C". */
+  operatingIn?: { suburb: string; neighbours: string[] };
+}
+
+const { title, description, crumbs = [], schema, noindex = false, bare = false, menu, enquireHref = '#enquire', operatingIn } = Astro.props;
+const tel = site.phone.replace(/\s/g, '');
+
+// Every page canonicals to itself on this site's own domain — built from the
+// request path and site.url, so no other domain can ever appear here.
+const canonicalURL = abs(Astro.url.pathname);
+const trail: Crumb[] = crumbs.length ? [{ name: 'Home', href: '/' }, ...crumbs] : [];
+const schemaArray = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
+const allSchema = noindex
+  ? []
+  : [businessSchema(), ...(trail.length ? [breadcrumbSchema(trail)] : []), ...schemaArray];
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="preload" as="image" href="/logo-360.webp"
+          imagesrcset="/logo-360.webp 360w, /logo-720.webp 720w, /logo-1080.webp 1080w"
+          imagesizes="(max-width: 600px) 170px, 227px" />
+    {!bare && (
+      <Fragment>
+        <link rel="preload" as="image" href="/hero-gutter-600.webp" media="(max-width: 700px)" fetchpriority="high" />
+        <link rel="preload" as="image" href="/hero-gutter-960.webp" media="(min-width: 701px)" fetchpriority="high" />
+      </Fragment>
+    )}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:image" content={abs('/og-image.png')} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
+    {site.gaMeasurementId && (
+      <Fragment>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${site.gaMeasurementId}`}></script>
+        <script is:inline define:vars={{ gaId: site.gaMeasurementId }}>
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function gtag() { window.dataLayer.push(arguments); };
+          gtag('js', new Date());
+          gtag('config', gaId);
+        </script>
+      </Fragment>
+    )}
+
+    {allSchema.map((s) => (
+      <script type="application/ld+json" set:html={JSON.stringify(s)} />
+    ))}
+  </head>
+  <body>
+    <Header bare={bare} menu={menu} enquireHref={enquireHref} />
+
+    {/* Suburb pages (the ones with an on-page menu) carry the breadcrumb at the
+        bottom, just above the footer, so the top of the page is all sales.
+        It stays visible: breadcrumb schema must describe a breadcrumb the
+        reader can see. */}
+    {trail.length > 0 && !menu && (
+      <nav class="crumbs wrap" aria-label="Breadcrumb">
+        <ol>
+          {trail.map((c, i) =>
+            i === trail.length - 1 ? (
+              <li aria-current="page">{c.name}</li>
+            ) : (
+              <li><a href={c.href}>{c.name}</a></li>
+            )
+          )}
+        </ol>
+      </nav>
+    )}
+
+    <slot />
+
+    {trail.length > 0 && menu && (
+      <nav class="crumbs crumbs-bottom" aria-label="Breadcrumb">
+        <ol class="wrap">
+          {trail.map((c, i) =>
+            i === trail.length - 1 ? (
+              <li aria-current="page">{c.name}</li>
+            ) : (
+              <li><a href={c.href}>{c.name}</a></li>
+            )
+          )}
+        </ol>
+      </nav>
+    )}
+
+    <Footer bare={bare} landing={!!menu} operatingIn={operatingIn} />
+
+    {!bare && (
+      <div class="sticky-cta" id="sticky-cta">
+        {tel && <a class="sticky-call when-open" href={`tel:${tel}`}>Call</a>}
+        {tel && <a class="sticky-text when-open" href={`sms:${tel}`}>Text</a>}
+        <a class="sticky-enquire" href={enquireHref}>Enquire now</a>
+      </div>
+    )}
+  </body>
+</html>

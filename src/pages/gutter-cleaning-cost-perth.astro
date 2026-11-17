@@ -1,0 +1,193 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import Faq from '../components/Faq.astro';
+import { site, fromPrice, priceBadge, priceSentence } from '../../site.config.mjs';
+import { faqSchema, serviceSchema, type FaqItem } from '../lib/schema';
+
+const p = site.pricing;
+
+const faqs: FaqItem[] = [
+  {
+    q: 'How much does gutter cleaning cost in Perth in 2026?',
+    a: `Gutter cleaning with us starts ${priceSentence}. The final price depends on the size of the house, roof access and how much has built up, and you get a firm price before anything is booked. Across the Perth market, operators that publish prices advertise single-storey starting prices from about $198 to $275 including GST, and two-storey starting prices from about $350 to $400.`,
+  },
+  {
+    q: 'Why is a two-storey house more expensive?',
+    a: `Working at height is slower and needs more equipment, and two-storey homes usually have more gutter. Our double storey prices start from $${p.tiers[2].from} for a townhouse and $${p.tiers[3].from} for a full double storey home. Across Perth operators that publish both figures, the two-storey starting price is typically $110 to $165 above the single-storey one (GST included).`,
+  },
+  {
+    q: 'Do you charge by the metre?',
+    a: 'No. We price the whole house from what we can see of it: roof size, storeys, pitch, access and tree cover. You get one figure for the job. National cost guides do quote per-metre rates, roughly $3.50 to $8 a metre for a single storey, but no Perth operator we could find publishes one.',
+  },
+  {
+    q: 'Is the price you send final?',
+    a: 'The price is for the house as it appears on satellite imagery. If something that cannot be seen from above changes the job — gutter guard that has to come off, or a roof far steeper than it looks — we will tell you before any work starts, and you are free to say no.',
+  },
+];
+---
+
+<Layout
+  title={`Gutter Cleaning Cost Perth 2026 | Prices From $${fromPrice}`}
+  description={`How much does gutter cleaning cost in Perth? Single storey from $${fromPrice}, double storey from $${p.tiers[3].from}. Real 2026 Perth prices and a firm quote by text.`}
+  crumbs={[{ name: 'Gutter cleaning cost Perth', href: '/gutter-cleaning-cost-perth/' }]}
+  schema={[
+    serviceSchema({
+      name: 'Gutter cleaning',
+      description: 'Gutter cleaning for Perth homes, priced per property from satellite imagery.',
+      path: '/gutter-cleaning-cost-perth/',
+      offers: true,
+    }),
+    faqSchema(faqs),
+  ]}
+>
+  <main>
+    <PageHero
+      eyebrow="2026 Perth Pricing Guide"
+      badge={priceBadge}
+      lead={`Clear, upfront pricing for every Perth home type. Single storey from $${fromPrice} — no hidden fees, no surprises on the day, and a firm figure for your own roof by text.`}
+      sub={['No call-out fee', 'Firm price by text', 'No obligation']}
+      secondary={{ href: '#prices', label: 'See all prices ↓' }}
+    >
+      Gutter Cleaning Cost <em>Perth</em>
+    </PageHero>
+    <div class="wrap">
+
+    <div class="layout-aside">
+      <article class="prose">
+        <p class="article-intro">
+          Gutter cleaning with us starts {priceSentence}. Below is what the
+          rest of the Perth market publishes, what pushes a price up, and how to
+          get an exact figure for your own roof without a site visit.
+        </p>
+        <h2 id="prices">Our prices</h2>
+        <div class="table-wrap">
+          <table class="price-table">
+            <thead><tr><th>Home type</th><th>Description</th><th>Price (from)</th></tr></thead>
+            <tbody>
+              {p.tiers.map((t) => (
+                <tr>
+                  <th scope="row">{t.label}</th>
+                  <td>{t.note}</td>
+                  <td class="num">From ${t.from}</td>
+                </tr>
+              ))}
+              <tr>
+                <th scope="row">Downpipe clearing</th>
+                <td>A blocked downpipe on its own. Downpipes are checked as part of every gutter clean.</td>
+                <td class="num">From ${p.downpipeFrom}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="price-small">
+          Price varies with property size, roof access and debris volume. We
+          confirm the price before starting — always.
+        </p>
+        <p>
+          Every job is priced individually, because two houses on the same street
+          can be very different jobs. One has forty metres of gutter and a
+          neighbour's marri hanging over the back. The next has twenty-five
+          metres and nothing taller than a lemon tree within reach of the roof.
+          That is why the street address gets you the most accurate price.
+        </p>
+
+        <h2>What other Perth operators publish</h2>
+        <p>
+          Most Perth gutter cleaners do not put a price on their website. We
+          went through the ones that do in November 2026. These are advertised
+          starting prices, so a large or awkward house will cost more.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Single storey</th><th>Two storey</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Perth operators that publish a price (four sites)</th><td class="num">from $198–$275</td><td class="num">from $350–$400</td></tr>
+              <tr><th scope="row">Airtasker, completed Perth tasks</th><td class="num">$176–$260<br /><span class="small muted">median $200</span></td><td>Not split out</td></tr>
+              <tr><th scope="row">Published cost guides (Airtasker, Yakka Labour)</th><td class="num">$200–$400<br /><span class="small muted">Perth estimate</span></td><td class="num">$220–$450<br /><span class="small muted">national, basic job</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted">
+          Operator figures are converted to GST-inclusive where a site quoted
+          them plus GST. Marketplace tasks include small and partial jobs, which
+          pulls the low end down. Checked November 2026; prices change.
+        </p>
+
+        <h2>What moves the price</h2>
+        <h3>Storeys</h3>
+        <p>
+          The biggest single factor. Among Perth operators that publish both
+          figures, a second storey adds roughly $110 to $165 to the starting price.
+        </p>
+        <h3>How much gutter there is</h3>
+        <p>
+          A compact three-bedroom house and a sprawling Hills home with wraparound
+          verandahs are not the same job, even though both are "single storey".
+          One Perth operator's published price list runs from $198 for a
+          three-bedroom, one-bathroom house to $467.50 for a six-bedroom,
+          four-bathroom one.
+        </p>
+        <h3>Roof pitch and access</h3>
+        <p>
+          A steep roof, a house cut into a slope, or a block where a ladder
+          cannot be footed safely all slow the job down. This is common on the
+          Darling Scarp, where one side of a single-storey house can be a storey
+          and a half off the ground.
+        </p>
+        <h3>What is in the gutter</h3>
+        <p>
+          Dry leaf that was cleaned out last year lifts out quickly. Three years
+          of wet jarrah leaf, bark and marri nuts composted into soil, with
+          seedlings growing in it, takes much longer.
+        </p>
+        <h3>Gutter guard that has to come off</h3>
+        <p>
+          Mesh keeps out most leaf, but fine debris still gets under it over
+          time, and the guard has to be lifted to clean beneath. The one Perth
+          operator that publishes a rate for this charges $4 to $6.50 a metre
+          on top of the clean.
+        </p>
+
+        <div class="note-box">
+          <p>
+            <strong>A cheap quote is not always a cheap job.</strong> Ask whether
+            the price includes the downpipes. A gutter emptied above a blocked
+            downpipe will be full of water again at the first rain.
+          </p>
+        </div>
+
+        <h2>Why we price from satellite</h2>
+        <p>
+          Almost everything that sets the price is visible from above: the roof
+          area, the number of storeys, the length of the gutter line, whether
+          there are solar panels in the way, and how much canopy is over the
+          house. So rather than send someone out to look, or ask you to measure
+          anything, we look at the satellite imagery and text you a figure.
+        </p>
+        <p>
+          All it takes is an enquiry with your name, mobile and suburb — and the street address if you have it handy.
+        </p>
+
+        <h2>When to book</h2>
+        <p>
+          Perth's rain is concentrated in winter: the long-term average rises
+          from about 35 mm in April to about 85 mm in May and 144 mm in July.
+          Demand for gutter cleaning follows it, so March and April are the
+          easiest months to get a convenient day. In the Hills, the weeks before
+          1 November are the other busy stretch, because that is when the
+          Kalamunda and Mundaring fire notices take effect.
+        </p>
+
+        <h2>Common questions about price</h2>
+        <Faq items={faqs} />
+      </article>
+
+      <aside>
+        <EnquiryForm heading="Get your exact price" />
+      </aside>
+    </div>
+    </div>
+  </main>
+</Layout>

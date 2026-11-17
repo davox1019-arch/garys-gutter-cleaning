@@ -1,0 +1,469 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { site } from '../../site.config.mjs';
+
+// The operator's private page: the enquiries inbox. Static shell only —
+// everything comes from /api/admin/*, which refuses to answer without the
+// admin password.
+---
+
+<Layout
+  title={`Enquiries — ${site.name}`}
+  description="Private."
+  noindex={true}
+  bare={true}
+>
+  <main class="a-wrap">
+    <h1>Enquiries</h1>
+    <p class="a-clock" id="clock"></p>
+
+    <form id="login" class="a-login">
+      <label class="field-label" for="pw">Password</label>
+      <input class="field" id="pw" type="password" autocomplete="current-password" />
+      <button class="btn" type="submit">Open</button>
+      <p class="err" id="login-err" role="alert" hidden></p>
+    </form>
+
+    <div id="panel" hidden>
+      <div class="a-bar">
+        <span id="count" class="muted"></span>
+        <button id="refresh" class="linkish">Refresh</button>
+        <button id="logout" class="linkish">Lock</button>
+      </div>
+
+      <div class="away-box" id="away-box">
+        <div class="away-row">
+          <span class="away-state" id="away-state">Away mode</span>
+          <button class="away-btn" id="away-toggle">…</button>
+        </div>
+        <div class="away-when" id="away-when" hidden>
+          <label for="away-return">Back</label>
+          <input id="away-return" type="text" maxlength="60" placeholder="next week" />
+          <button class="linkish" id="away-save">Save</button>
+        </div>
+        <p class="away-help" id="away-help"></p>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab is-on" data-status="new">New <span class="tab-n" id="n-new"></span></button>
+        <button class="tab" data-status="contacted">Contacted <span class="tab-n" id="n-contacted"></span></button>
+        <button class="tab" data-status="booked">Booked <span class="tab-n" id="n-booked"></span></button>
+        <button class="tab" data-status="">All</button>
+      </div>
+      <input id="search" class="field a-search" type="search" autocomplete="off"
+             placeholder="Search name, suburb, address, phone or message" aria-label="Search enquiries" />
+
+      <button id="notify" class="notify-btn" hidden></button>
+      <p id="notify-note" class="notify-note" hidden></p>
+      <button id="notify-test" class="linkish notify-test" hidden>Send a test alert to this phone</button>
+      <div id="list"></div>
+    </div>
+  </main>
+</Layout>
+
+<script is:inline define:vars={{ zone: site.timeZone }}>
+  (function () {
+    var KEY = 'ggc_admin_pw';
+    var pw = '';
+    try { pw = localStorage.getItem(KEY) || ''; } catch (e) {}
+    var timer = null;
+
+    var el = function (id) { return document.getElementById(id); };
+    var esc = function (s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    };
+    var ago = function (ms) {
+      if (!ms) return '';
+      var secs = Math.round((Date.now() - ms) / 1000);
+      if (secs < 60) return secs + 's ago';
+      var m = Math.round(secs / 60);
+      if (m < 60) return m + ' min ago';
+      var h = Math.round(m / 60);
+      return h < 24 ? h + 'h ago' : Math.round(h / 24) + 'd ago';
+    };
+
+    // Every clock time on this page is Perth time, named as such — never the
+    // phone's own zone. Working from the eastern states, "2:10 pm" would
+    // otherwise be two or three hours out depending on the time of year,
+    // because WA does not observe daylight saving and the east does.
+    function perth(ms, withDay) {
+      try {
+        var opts = { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true };
+        if (withDay) { opts.weekday = 'short'; opts.day = 'numeric'; opts.month = 'short'; }
+        return new Intl.DateTimeFormat('en-AU', opts).format(new Date(ms));
+      } catch (e) { return ''; }
+    }
+    function tick() {
+      el('clock').textContent = 'Perth time now: ' + perth(Date.now(), true) +
+        ' — all times on this page are Perth time (AWST).';
+    }
+    tick();
+    setInterval(tick, 30000);
+
+    function api(path, opts) {
+      opts = opts || {};
+      opts.headers = Object.assign({ authorization: 'Bearer ' + pw }, opts.headers || {});
+      return fetch(path, opts).then(function (r) {
+        if (r.status === 401) throw new Error('unauthorised');
+        return r.json().then(function (d) {
+          if (!r.ok) throw new Error(d && d.error ? d.error : 'Request failed');
+          return d;
+        });
+      });
+    }
+
+    var NEXT = {
+      new: [['contacted', 'Mark contacted'], ['booked', 'Mark booked']],
+      contacted: [['booked', 'Mark booked'], ['new', 'Back to new']],
+      booked: [['contacted', 'Back to contacted']],
+    };
+
+    function card(q) {
+      var where = q.address || ((q.suburb || '') + ' WA');
+      var maps = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(where);
+      var tel = String(q.phone || '').replace(/[^\d+]/g, '');
+      var h = '<div class="q ' + esc(q.status) + '">';
+      h += '<span class="tag ' + esc(q.status) + '">' + esc(q.status) + '</span>';
+      // Replies inside 30 minutes win the job; slower ones lose it. An
+      // unanswered enquiry that is running late says so.
+      if (q.status === 'new') {
+        var waited = Math.round((Date.now() - q.created_at) / 60000);
+        if (waited >= 10) h += '<span class="late">Waiting ' + (waited < 120 ? waited + ' min' : ago(q.created_at).replace(' ago', '')) + '</span>';
+      }
+      h += '<p class="addr">' + esc(q.name) + '</p>';
+      h += '<p class="wants"><a href="tel:' + esc(tel) + '">' + esc(q.phone) + '</a> &middot; ' +
+           '<a href="sms:' + esc(tel) + '">Text</a> &middot; <a href="tel:' + esc(tel) + '">Call</a></p>';
+      h += '<p class="note"><strong>' + esc(q.suburb || '') + '</strong>' +
+           (q.address ? ' &middot; ' + esc(q.address) + ' &middot; <a class="maps" target="_blank" rel="noopener" href="' + maps + '">Check the roof &rarr;</a>'
+                      : ' &middot; <em>no street address — text to ask</em> &middot; <a class="maps" target="_blank" rel="noopener" href="' + maps + '">Map &rarr;</a>') +
+           '</p>';
+      if (q.message) h += '<p class="note msg">' + esc(q.message).replace(/\n/g, '<br>') + '</p>';
+      h += '<p class="meta">Received ' + ago(q.created_at) + ' &middot; ' + esc(perth(q.created_at, true)) +
+           (q.page ? ' &middot; from ' + esc(q.page) : '') + '</p>';
+      if (q.status !== 'new' && q.contacted_at) {
+        h += '<p class="meta">First reply logged ' + esc(perth(q.contacted_at, true)) + ' &middot; ' +
+             Math.max(1, Math.round((q.contacted_at - q.created_at) / 60000)) + ' min after it came in</p>';
+      }
+      h += '<div class="row">';
+      (NEXT[q.status] || []).forEach(function (n, i) {
+        h += '<button class="btn' + (i ? ' btn-quiet' : '') + '" data-id="' + esc(q.id) + '" data-to="' + n[0] + '">' + n[1] + '</button>';
+      });
+      h += '</div><span class="save-msg"></span>';
+      h += '<button class="del" data-del="' + esc(q.id) + '">Delete</button>';
+      return h + '</div>';
+    }
+
+    var filter = 'new';
+    var term = '';
+
+    function load() {
+      var path = '/api/admin/enquiries?status=' + encodeURIComponent(filter) +
+                 '&q=' + encodeURIComponent(term);
+      return api(path).then(function (d) {
+        var qs = d.enquiries || [];
+        var c = d.counts || { new: 0, contacted: 0, booked: 0 };
+
+        el('n-new').textContent = c.new ? '(' + c.new + ')' : '';
+        el('n-contacted').textContent = c.contacted ? '(' + c.contacted + ')' : '';
+        el('n-booked').textContent = c.booked ? '(' + c.booked + ')' : '';
+        el('count').textContent = c.new ? c.new + ' waiting on a reply' : 'Nothing waiting';
+        document.title = (c.new ? '(' + c.new + ') ' : '') + 'Enquiries';
+
+        var empty = term
+          ? 'Nothing matches "' + term + '".'
+          : filter
+            ? 'No ' + filter + ' enquiries.'
+            : 'No enquiries yet.';
+        el('list').innerHTML = qs.length
+          ? qs.map(card).join('')
+          : '<p class="muted">' + esc(empty) + '</p>';
+      });
+    }
+
+    function open() {
+      el('login').hidden = true;
+      el('panel').hidden = false;
+      refreshNotifyState();
+      loadAway();
+      load().catch(fail);
+      if (!timer) timer = setInterval(function () { load().catch(function () {}); }, 20000);
+    }
+
+    function fail(e) {
+      var unauthorised = e && e.message === 'unauthorised';
+      if (unauthorised) {
+        try { localStorage.removeItem(KEY); } catch (e2) {}
+        pw = '';
+      }
+      el('panel').hidden = true;
+      el('login').hidden = false;
+      el('login-err').textContent = unauthorised
+        ? 'Wrong password.'
+        : 'Could not reach the server — try again in a moment.';
+      el('login-err').hidden = false;
+    }
+
+    el('login').addEventListener('submit', function (e) {
+      e.preventDefault();
+      // Trimmed here as well as on the server: a pasted password often carries
+      // a trailing space or newline.
+      pw = el('pw').value.trim();
+      el('login-err').hidden = true;
+      api('/api/admin/enquiries')
+        .then(function () { try { localStorage.setItem(KEY, pw); } catch (e2) {} open(); })
+        .catch(fail);
+    });
+
+    // Switching back to this tab, or returning with Back, should show what
+    // arrived in the meantime immediately rather than up to 20 seconds later.
+    function wake() {
+      if (document.hidden || el('panel').hidden) return;
+      load().catch(function () {});
+    }
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) wake(); });
+
+    // --- push notifications ---------------------------------------------
+    // Alerts land on the lock screen with the browser closed, which email
+    // cannot do. Email stays on regardless as the backstop.
+    var pushSupported =
+      'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+    function keyToBytes(base64) {
+      var pad = '='.repeat((4 - (base64.length % 4)) % 4);
+      var raw = atob((base64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+      var out = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out;
+    }
+
+    function setNotifyLabel(on, note) {
+      var b = el('notify');
+      b.hidden = false;
+      b.textContent = on ? 'Phone alerts are ON — tap to turn off' : 'Turn on phone alerts';
+      b.dataset.on = on ? '1' : '';
+      var n = el('notify-note');
+      n.textContent = note || '';
+      n.hidden = !note;
+      el('notify-test').hidden = !on;
+    }
+
+    function refreshNotifyState() {
+      el('notify-test').hidden = true;
+      if (!pushSupported) {
+        el('notify').hidden = true;
+        el('notify-note').textContent =
+          'This browser cannot do push alerts. On Android open this page in Chrome; on iPhone add it to the Home Screen first, then open it from there.';
+        el('notify-note').hidden = false;
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        return setNotifyLabel(false, 'Blocked in your browser settings — allow notifications for this site, then reload.');
+      }
+      navigator.serviceWorker
+        .getRegistration()
+        .then(function (reg) {
+          if (!reg) return setNotifyLabel(false);
+          return reg.pushManager.getSubscription().then(function (sub) { setNotifyLabel(!!sub); });
+        })
+        .catch(function () { setNotifyLabel(false); });
+    }
+
+    function enablePush() {
+      el('notify').textContent = 'Setting up…';
+      Notification.requestPermission()
+        .then(function (perm) {
+          if (perm !== 'granted') throw new Error('Permission refused');
+          return navigator.serviceWorker.register('/sw.js');
+        })
+        .then(function () { return navigator.serviceWorker.ready; })
+        .then(function (reg) {
+          return fetch('/api/push/key')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d.key) throw new Error('Push is not configured on the server — run npm run setup:push');
+              return reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: keyToBytes(d.key),
+              });
+            });
+        })
+        .then(function (sub) {
+          return api('/api/admin/push', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint, label: navigator.platform || 'phone' }),
+          });
+        })
+        .then(function () { setNotifyLabel(true); })
+        .catch(function (err) {
+          setNotifyLabel(false, err.message || 'Could not turn alerts on — try again.');
+        });
+    }
+
+    function disablePush() {
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (!reg) return setNotifyLabel(false);
+        reg.pushManager.getSubscription().then(function (sub) {
+          if (!sub) return setNotifyLabel(false);
+          var endpoint = sub.endpoint;
+          sub.unsubscribe().then(function () {
+            api('/api/admin/push', {
+              method: 'DELETE',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ endpoint: endpoint }),
+            })
+              .catch(function () {})
+              .then(function () { setNotifyLabel(false); });
+          });
+        });
+      });
+    }
+
+    el('notify-test').addEventListener('click', function () {
+      var b = el('notify-test');
+      b.disabled = true;
+      b.textContent = 'Sending…';
+      api('/api/admin/push/test', { method: 'POST' })
+        .then(function () { b.textContent = 'Sent — your phone should buzz within a second or two'; })
+        .catch(function (err) { b.textContent = err.message || 'Could not send a test'; })
+        .then(function () {
+          setTimeout(function () {
+            b.disabled = false;
+            b.textContent = 'Send a test alert to this phone';
+          }, 6000);
+        });
+    });
+
+    el('notify').addEventListener('click', function () {
+      if (el('notify').dataset.on) disablePush();
+      else enablePush();
+    });
+
+    // --- away mode ---------------------------------------------------------
+    // This switch lives on a page away mode never alters: the public pages are
+    // changed by CSS keyed off an attribute, and nothing rewrites this one.
+    var away = { on: false, returnText: 'next week' };
+
+    function paintAway() {
+      el('away-box').classList.toggle('is-on', away.on);
+      el('away-state').textContent = away.on
+        ? 'AWAY until ' + away.returnText
+        : "Away mode is off — you're taking work";
+      el('away-toggle').textContent = away.on ? "I'm back" : "I'm away";
+      el('away-toggle').disabled = false;
+      el('away-when').hidden = !away.on;
+      if (document.activeElement !== el('away-return')) el('away-return').value = away.returnText;
+      el('away-help').textContent = away.on
+        ? 'Your number is hidden on every page, and every enquiry form says when you are back. Enquiries still come in.'
+        : 'Turning this on hides your number on every page and tells people on every enquiry form when you are back. Enquiries still come in.';
+    }
+
+    function loadAway() {
+      return api('/api/admin/settings')
+        .then(function (d) { away = d.away || away; paintAway(); })
+        .catch(function () {});
+    }
+
+    function saveAway(next) {
+      el('away-toggle').disabled = true;
+      return api('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(next)
+      })
+        .then(function (d) { away = d.away || next; paintAway(); })
+        .catch(function (err) { paintAway(); fail(err); });
+    }
+
+    el('away-toggle').addEventListener('click', function () {
+      saveAway({ on: !away.on, returnText: el('away-return').value.trim() || away.returnText });
+    });
+
+    el('away-save').addEventListener('click', function () {
+      saveAway({ on: away.on, returnText: el('away-return').value.trim() });
+    });
+
+    el('tabs').addEventListener('click', function (e) {
+      var tab = e.target.closest('.tab');
+      if (!tab) return;
+      filter = tab.dataset.status;
+      var all = el('tabs').querySelectorAll('.tab');
+      for (var i = 0; i < all.length; i++) all[i].classList.toggle('is-on', all[i] === tab);
+      load().catch(fail);
+    });
+
+    var searchTimer = null;
+    el('search').addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        term = el('search').value.trim();
+        load().catch(fail);
+      }, 300);
+    });
+
+    el('refresh').addEventListener('click', function () { load().catch(fail); });
+    el('logout').addEventListener('click', function () {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      pw = '';
+      location.reload();
+    });
+
+    // Delegated so re-rendering doesn't drop handlers.
+    el('list').addEventListener('click', function (e) {
+      var del = e.target.closest('button[data-del]');
+      if (del) {
+        // First tap arms, second deletes. A single tap is too easy to hit by
+        // accident on a phone, and there is no undo.
+        if (!del.dataset.armed) {
+          del.dataset.armed = '1';
+          del.textContent = 'Tap again to delete';
+          setTimeout(function () {
+            if (!del.dataset.armed) return;
+            delete del.dataset.armed;
+            del.textContent = 'Delete';
+          }, 4000);
+          return;
+        }
+        del.disabled = true;
+        del.textContent = 'Deleting…';
+        api('/api/admin/enquiry', {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: del.dataset.del })
+        })
+          .then(function () { return load(); })
+          .catch(function (err) {
+            del.disabled = false;
+            delete del.dataset.armed;
+            del.textContent = 'Delete failed — tap to retry';
+            if (err && err.message === 'unauthorised') fail(err);
+          });
+        return;
+      }
+
+      var btn = e.target.closest('button[data-to]');
+      if (!btn) return;
+      var msg = btn.closest('.q').querySelector('.save-msg');
+      btn.disabled = true;
+      msg.className = 'save-msg muted';
+      msg.textContent = ' Saving…';
+      api('/api/admin/enquiry', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: btn.dataset.id, status: btn.dataset.to })
+      })
+        .then(function () { return load(); })
+        .catch(function (err) {
+          btn.disabled = false;
+          msg.className = 'save-msg err';
+          msg.textContent = ' ' + (err.message || 'Failed');
+          if (err && err.message === 'unauthorised') fail(err);
+        });
+    });
+
+    if (pw) open();
+  })();
+</script>

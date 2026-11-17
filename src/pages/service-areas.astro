@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import { site, priceBadge } from '../../site.config.mjs';
+import { suburbs } from '../data/suburbs';
+import { councils } from '../data/councils';
+
+const groups = [
+  {
+    key: 'hills',
+    title: 'Perth Hills',
+    blurb:
+      'Jarrah and marri forest on the Darling Scarp, large blocks, and council fire notices that name gutters. The heaviest leaf load in the metropolitan area.',
+  },
+  {
+    key: 'east',
+    title: 'Eastern suburbs and foothills',
+    blurb:
+      'Where the coastal plain meets the scarp, and along the Swan, Helena and Canning rivers. Older housing and big established trees.',
+  },
+  {
+    key: 'north',
+    title: 'Northern suburbs',
+    blurb:
+      'Established 1970s and 1980s suburbs on the coastal plain, with mature gardens, street trees and bushland reserves.',
+  },
+] as const;
+---
+
+<Layout
+  title={`Gutter Cleaning Perth Suburbs | Areas We Service`}
+  description="Gutter cleaning in Kalamunda, Mundaring, Darlington, Roleystone, Guildford, Duncraig, Kingsley and more Perth suburbs. Firm price by text."
+  crumbs={[{ name: 'Service areas', href: '/service-areas/' }]}
+>
+  <main>
+    <PageHero
+      eyebrow="Perth Hills · East · North"
+      badge={priceBadge}
+      lead="Gutter cleaning across the Perth metro area, with a local guide for each suburb below — what grows over the roofs, what the houses are like, and what the council expects."
+      sub={['Firm price by text', 'No site visit needed', 'Single & two storey']}
+      secondary={{ href: '#suburbs', label: 'Find your suburb ↓' }}
+    >
+      Gutter Cleaning Service Areas <em>Perth</em>
+    </PageHero>
+    <div class="wrap">
+
+    <div class="layout-aside">
+      <div id="suburbs">
+        {groups.map((g) => (
+          <section style="margin-bottom:2.5rem">
+            <h2>{g.title}</h2>
+            <p class="muted narrow">{g.blurb}</p>
+            <ul class="suburb-list">
+              {suburbs.filter((s) => s.group === g.key).map((s) => (
+                <li>
+                  <a href={`/gutter-cleaning-${s.slug}/`}>
+                    Gutter cleaning {s.name}
+                    <span>{s.postcode} · {councils[s.council].name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        <section class="prose" style="margin-bottom:2.5rem">
+          <h2>Also covering nearby suburbs</h2>
+          <p>
+            Each suburb above has neighbours we cover on the same runs. If yours
+            is one of these, send an enquiry with your suburb for a firm price.
+          </p>
+          {groups.map((g) => {
+            const near = [...new Set(suburbs.filter((s) => s.group === g.key).flatMap((s) => s.neighbours))]
+              .filter((n) => !suburbs.some((s) => s.name === n))
+              .sort();
+            return near.length ? (
+              <p><strong>{g.title}:</strong> gutter cleaning in {near.join(', ')}.</p>
+            ) : null;
+          })}
+        </section>
+
+        <section class="prose">
+          <h2>Not on the list?</h2>
+          <p>
+            The list is where we have written guides, not the limit of where we
+            work. Send an enquiry with your suburb and you will get a price, or
+            a straight answer that it is outside the area.
+          </p>
+          <p>
+            Related: <a href="/gutter-cleaning-cost-perth/">gutter cleaning cost in Perth</a>,
+            <a href="/downpipe-clearing-perth/">downpipe clearing</a> and
+            <a href="/gutter-guard-perth/">gutter guard</a>.
+          </p>
+        </section>
+      </div>
+
+      <aside>
+        <EnquiryForm />
+      </aside>
+    </div>
+    </div>
+  </main>
+</Layout>

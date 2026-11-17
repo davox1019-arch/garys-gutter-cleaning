@@ -1,0 +1,46 @@
+{
+  "name": "garys-gutter-cleaning-perth",
+  "compatibility_date": "2026-05-03",
+
+  "main": "worker/index.js",
+
+  // The live domain. www is attached too and the Worker redirects it to the
+  // bare domain, so only one version of each page is ever indexed.
+  // Waiting on the domain being added to Cloudflare — uncomment then.
+  // "routes": [
+  //   { "pattern": "garysguttercleaning.com.au", "custom_domain": true },
+  //   { "pattern": "www.garysguttercleaning.com.au", "custom_domain": true }
+  // ],
+  "workers_dev": true,
+
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Without this a matching static file is served before the Worker ever
+    // runs, so it could never stamp pages with away mode. The Worker hands
+    // non-HTML straight back to assets, so the extra hop is cheap.
+    "run_worker_first": true,
+    "not_found_handling": "404-page"
+  },
+
+  // Its own database — nothing is shared with any other site.
+  // `npm run setup:quotes` creates it and writes the id below.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "garys-gutter-cleaning-perth-quotes",
+      "database_id": "46c8226a-ce8c-44a2-8bc3-8ada02277063"
+    }
+  ],
+
+  // Secrets (never committed) — set with `npx wrangler secret put <NAME>`,
+  // piped in by the setup scripts:
+  //   ADMIN_PASSWORD         password for /quote-admin/
+  //   RESEND_API_KEY         from resend.com, for the alert emails
+  //   ALERT_EMAIL_TO         the address alerts are sent to
+  //   GOOGLE_PLACES_API_KEY  Places API (New), for address autocomplete
+  //   VAPID_PUBLIC_KEY / VAPID_PRIVATE_JWK   web push (npm run setup:push)
+  "vars": {
+    "ALERT_EMAIL_FROM": "onboarding@resend.dev"
+  }
+}

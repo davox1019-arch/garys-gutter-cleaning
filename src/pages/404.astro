@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../../site.config.mjs';
+---
+
+<Layout title={`Page not found — ${site.name}`} description="That page does not exist." noindex={true} enquireHref="/#enquire">
+  <main>
+    <PageHero enquireHref="/#enquire" lead="The link may be old or mistyped.">That page isn't here</PageHero>
+    <div class="wrap band">
+    <p class="narrow">
+      You can head <a href="/">back to the homepage</a>,
+      see the <a href="/service-areas/">suburbs we cover</a>, or check
+      <a href="/gutter-cleaning-cost-perth/">what gutter cleaning costs in Perth</a>.
+    </p>
+    </div>
+  </main>
+</Layout>

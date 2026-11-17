@@ -1,0 +1,89 @@
+---
+import { site } from '../../site.config.mjs';
+
+export interface Props {
+  bare?: boolean;
+  /** When set (suburb pages), the logo is a button that opens this menu of
+   *  on-page links, as on the Melbourne suburb pages, instead of linking home. */
+  menu?: { href: string; label: string }[];
+  enquireHref?: string;
+}
+const { bare = false, menu, enquireHref = '#enquire' } = Astro.props;
+const tel = site.phone.replace(/\s/g, '');
+
+const links = [
+  { href: '/gutter-cleaning-cost-perth/', label: 'Cost' },
+  { href: '/downpipe-clearing-perth/', label: 'Downpipes' },
+  { href: '/gutter-guard-perth/', label: 'Gutter guard' },
+  { href: '/service-areas/', label: 'Service areas' },
+];
+const here = Astro.url.pathname;
+const logo = {
+  src: '/logo-360.webp',
+  srcset: '/logo-360.webp 360w, /logo-720.webp 720w, /logo-1080.webp 1080w',
+  sizes: '(max-width: 600px) 170px, 227px',
+};
+---
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    {menu ? (
+      <div class="page-menu-wrap">
+        <button class="logo-btn" id="logo-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="page-menu">
+          <img src={logo.src} srcset={logo.srcset} sizes={logo.sizes} width="2000" height="637" alt={site.name} fetchpriority="high" />
+          <span class="logo-caret" aria-hidden="true">▾</span>
+          <span class="sr-only">Open page menu</span>
+        </button>
+        <nav class="page-menu" id="page-menu" aria-label="On this page" hidden>
+          {menu.map((m) => <a href={m.href}>{m.label}</a>)}
+        </nav>
+      </div>
+    ) : (
+      <a class="logo" href="/">
+        <img src={logo.src} srcset={logo.srcset} sizes={logo.sizes} width="2000" height="637" alt={`${site.name} — home`} fetchpriority="high" />
+      </a>
+    )}
+
+    {!bare && !menu && (
+      <Fragment>
+        <nav class="nav nav-desktop" aria-label="Main">
+          {links.map((l) => (
+            <a href={l.href} aria-current={here === l.href ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </nav>
+        {tel && <a class="header-phone when-open" href={`tel:${tel}`}>{site.phone}</a>}
+        <a class="btn header-cta" href={enquireHref}>Enquire</a>
+        <details class="nav-toggle">
+          <summary>Menu</summary>
+          <nav class="nav" aria-label="Main (mobile)">
+            <a href="/">Home</a>
+            {links.map((l) => (
+              <a href={l.href} aria-current={here === l.href ? 'page' : undefined}>{l.label}</a>
+            ))}
+          </nav>
+        </details>
+      </Fragment>
+    )}
+
+    {menu && tel && <a class="header-phone when-open" href={`tel:${tel}`}>{site.phone}</a>}
+    {menu && <a class="btn header-cta" href={enquireHref}>Enquire</a>}
+  </div>
+</header>
+
+{menu && (
+  <script is:inline>
+    (function () {
+      var btn = document.getElementById('logo-btn');
+      var menu = document.getElementById('page-menu');
+      if (!btn || !menu) return;
+      function set(open) {
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      btn.addEventListener('click', function (e) { e.stopPropagation(); set(menu.hidden); });
+      menu.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+      document.addEventListener('click', function (e) { if (!menu.hidden && !menu.contains(e.target)) set(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); } });
+    })();
+  </script>
+)}
