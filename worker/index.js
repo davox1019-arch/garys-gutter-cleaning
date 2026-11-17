@@ -305,8 +305,9 @@ export default {
     const url = new URL(request.url);
 
     // http → https and www → bare domain, so Google only ever sees one copy
-    // of each page. Local dev (localhost) is left alone.
-    const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    // of each page. Local dev is left alone: `wrangler dev` reports the live
+    // domain as the request host, so it is flagged by LOCAL_DEV in .dev.vars.
+    const local = env.LOCAL_DEV === '1' || url.hostname === 'localhost' || url.hostname === '127.0.0.1';
     if (!local && (url.protocol === 'http:' || url.hostname.startsWith('www.'))) {
       url.protocol = 'https:';
       if (url.hostname.startsWith('www.')) url.hostname = url.hostname.slice(4);

@@ -4,8 +4,11 @@
  * for a suburb on this site: there is no /suburbs/{slug}/ variant and there
  * must never be a second page competing for the same suburb and service.
  *
- * Section order follows the Melbourne suburb pages: photo hero, enquiry form,
- * what's included, promises, the local write-up, prices, FAQ.
+ * Built as a landing page, after David's Melbourne suburb pages: short
+ * sections a homeowner actually reads, in this order — photo hero, trust
+ * strip, what's included, promises, a short local note, prices, when to book,
+ * FAQ, enquiry form, final call to action. No census tables, rainfall essays
+ * or source notes on the page.
  *
  * Links (owner's decision, November 2026): the page links to no other page
  * on the site except the homepage, through a small visible breadcrumb
@@ -14,16 +17,18 @@
  * anchor, a phone link, or plain text. The footer names the suburb and three
  * bordering suburbs as plain text.
  *
- * Everything in the "local" section comes from the suburb's own entry in
- * src/data/suburbs.ts.
+ * Unique per suburb: title, description, hero line, the local note
+ * (src/data/suburbLocal.ts), the council fire-notice details, two
+ * suburb-specific FAQs and the nearby suburbs.
  */
 import Layout from '../layouts/Layout.astro';
 import EnquiryForm from '../components/EnquiryForm.astro';
 import PageHero from '../components/PageHero.astro';
 import Faq from '../components/Faq.astro';
-import { site, fromPrice, priceBadge, seoTitle } from '../../site.config.mjs';
+import { site, fromPrice, priceBadge } from '../../site.config.mjs';
 import PriceCards from '../components/PriceCards.astro';
 import { suburbs, type Suburb } from '../data/suburbs';
+import { suburbLocal } from '../data/suburbLocal';
 import { councils } from '../data/councils';
 import { faqSchema, serviceSchema } from '../lib/schema';
 
@@ -33,11 +38,14 @@ export function getStaticPaths() {
 
 const { s } = Astro.props as { s: Suburb };
 const council = councils[s.council];
+const local = suburbLocal[s.slug];
+if (!local) throw new Error(`No local note for ${s.slug} in src/data/suburbLocal.ts`);
 const path = `/gutter-cleaning-${s.slug}/`;
 const p = site.pricing;
+const tiers = p.tiers;
+
 // Search snippet: keyword + postcode + price first, ticked selling points,
 // then bordering suburbs, which makes each one unique. Kept to 160 characters.
-// Wording never claims the site itself does the cleaning.
 const [n1, n2, n3] = s.neighbours;
 const metaDesc = (() => {
   const base = `Gutter cleaning ${s.name} ${s.postcode} from $${fromPrice} ✓ Trusted & local ✓ Professional service ✓ Upfront pricing ✓ Free quote`;
@@ -55,22 +63,86 @@ const title = [
   `Gutter Cleaning ${s.name} | From $${fromPrice}`,
 ].find((t) => t.length <= 60)!;
 const region = { hills: 'Perth Hills', east: 'Eastern Suburbs', north: 'Northern Suburbs' }[s.group];
+const hasNotice = !!council.gutterQuote;
 
-// What a clean covers. Every line here is a commitment to customers:
-// CONFIRM EACH ONE WITH THE OPERATOR before launch, and delete any that
-// they do not do on every job.
+const fmtHour = (h: number) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
+const hours = `${fmtHour(site.quoteHours.open)}–${fmtHour(site.quoteHours.close)}`;
+
+const trust = ['Gary comes out personally', `From $${fromPrice}`, 'Firm price upfront', 'Free quote', 'Single & double storey'];
+
+// What a clean covers. Every line is a promise to the customer: keep it true
+// of every job.
 const included = [
-  { t: 'Every gutter run cleared', d: 'Leaf, bark, gumnuts and silt removed from every gutter on the house, not just the ones you can see from the street.' },
-  { t: 'Downpipes checked', d: 'Each downpipe checked as part of the clean, so the water has somewhere to go when it rains.' },
-  { t: 'Sheds and outbuildings on request', d: 'Patios, sheds and granny flats can be added to the price — mention them in your enquiry.' },
-  { t: 'Anything unusual flagged first', d: 'If the job turns out to be more than the roof showed from above, you are told before any work starts.' },
+  { t: 'Full hand-removal of debris', d: 'Every leaf, bark strip, gumnut and bit of sludge cleared from every gutter run.' },
+  { t: 'Downpipe check & flush', d: 'Every downpipe checked and flushed so water reaches the drain or soakwell.' },
+  { t: 'Water flush test', d: 'Gutters flushed with water to prove they drain, not just scooped and left.' },
+  { t: 'Condition check', d: 'Cracks, sagging sections or loose brackets pointed out while Gary is up there.' },
+  { t: 'Before & after photos', d: 'Photos sent to you so you can see exactly what came out.' },
+  { t: 'Tidy finish', d: 'Debris bagged and taken away. Your yard left the way it was.' },
+  hasNotice
+    ? { t: 'Fire-notice ready', d: `Gutters left clear of flammable matter, as the ${council.name} notice requires.` }
+    : { t: 'Sheds & patios on request', d: 'Add a shed, patio or granny flat to the same visit. Just mention it.' },
+  { t: 'Honest debrief', d: "What Gary found and anything worth watching. No upsell." },
 ];
+
+const promises = [
+  { icon: '💰', t: 'Firm price upfront', d: 'You get the price before any work starts. No call-out surprises on the day.' },
+  { icon: '👷', t: 'Gary shows up', d: 'The person you speak to is the person on your roof.' },
+  { icon: '🗣️', t: 'Straight advice', d: "If your gutters don't need doing yet, you'll be told." },
+  { icon: '⚡', t: 'Quick replies', d: `Enquiries answered ${hours}, Perth time.` },
+];
+
+// Perth's seasons, not Melbourne's: dry summers, wet winters from May.
+const seasons = [
+  { icon: '🍂', t: 'Autumn', when: 'April–May', d: 'Before the first winter fronts. The most important clean of the year.' },
+  hasNotice
+    ? { icon: '🔥', t: 'Before the fire notice', when: `By ${council.complyBy.replace(/ \d{4}$/, '')}`, d: `The ${council.name} notice requires clear gutters by ${council.complyBy}.` }
+    : { icon: '🌸', t: 'Spring', when: 'Oct–Nov', d: 'Before bushfire season. Dry leaf in a gutter is what embers land on.' },
+  { icon: '☀️', t: 'Summer', when: 'Dec–Feb', d: 'Gums drop most bark and leaf in the heat. Keep gutters clear through fire season.' },
+  { icon: '⛈️', t: 'After storms', when: 'Anytime', d: 'A winter storm can fill a gutter in one night. Book a post-storm clean.' },
+];
+
+// Council point for the local note, from councils.ts.
+const councilPoint = hasNotice
+  ? `🔥 ${council.name} fire notice: gutters clear of flammable matter by ${council.complyBy}`
+  : `📅 No council gutter deadline here, so clean before the winter rain`;
+
+// FAQ: the common questions (as on David's pages), plus this suburb's own two.
+const commonFaqs = [
+  {
+    q: `How much does gutter cleaning cost in ${s.name}?`,
+    a: `Units start from $${tiers[0].from}, single storey houses from $${tiers[1].from}, double storey townhouses from $${tiers[2].from} and full double storey homes from $${tiers[3].from}. The price depends on the size of the house, roof access and how much has built up, and you get a firm price before any work starts.`,
+  },
+  {
+    q: `What's included in a gutter clean in ${s.name}?`,
+    a: 'Full hand-removal of debris from every gutter run, every downpipe checked and flushed, a water flush test, a check for cracks or loose brackets, before and after photos, and all debris bagged and taken away.',
+  },
+];
+const moreFaqs = [
+  {
+    q: `Do I need to be home for the clean?`,
+    a: "No. As long as Gary can get to the side of the house, you don't need to be there. You'll get before and after photos when it's done.",
+  },
+  {
+    q: `Do you clean double storey homes in ${s.name}?`,
+    a: `Yes. Single storey, double storey, units and townhouses. Double storey homes start from $${tiers[3].from}.`,
+  },
+  {
+    q: 'What if a downpipe is blocked?',
+    a: `Every downpipe is checked and flushed as part of the clean. If one is blocked further down, it can be cleared on the same visit, from $${p.downpipeFrom}.`,
+  },
+  {
+    q: `Is Gary's Gutter Cleaning local to ${s.name}?`,
+    a: `Yes. Gary is a local Perth gutter cleaner working across the ${region}, including ${s.name}, ${n1}, ${n2} and ${n3}.`,
+  },
+];
+const faqs = [...commonFaqs, ...s.faqs, ...moreFaqs];
 
 const menu = [
   { href: '#enquire', label: 'Enquire now' },
   { href: '#included', label: "What's included" },
-  { href: `#local`, label: `Gutters in ${s.name}` },
   { href: '#pricing', label: 'Prices' },
+  { href: '#when', label: 'When to book' },
   { href: '#faq', label: 'FAQ' },
 ];
 ---
@@ -90,28 +162,29 @@ const menu = [
       postcode: s.postcode,
       offers: true,
     }),
-    faqSchema(s.faqs),
+    faqSchema(faqs),
   ]}
 >
   <main>
     <PageHero
       eyebrow={`${region} · ${s.name} WA ${s.postcode}`}
       badge={priceBadge}
-      lead={`Gutter cleaning in ${s.name}: leaf, bark and gumnuts cleared from every gutter run, downpipes checked, and a firm price texted to you before anyone comes out.`}
-      sub={[`${council.name} area`, 'Firm price by text', 'No site visit needed', 'Single & two storey']}
+      lead={`Full hand-removal of leaf, bark and gumnuts, downpipes checked and flushed, before & after photos and a tidy finish. Firm price before Gary starts.`}
+      sub={['Gary comes out personally', 'Free quote', 'Single & double storey']}
       secondary={{ href: '#pricing', label: 'See prices ↓' }}
     >Gutter Cleaning <em>{s.name}</em></PageHero>
 
-    <section class="quote-band">
-      <div class="wrap">
-        <EnquiryForm suburb={s.name} postcode={s.postcode} heading={`Gutter cleaning in ${s.name}: send an enquiry`} />
+    <div class="trust-strip" aria-label="Why customers choose Gary">
+      <div class="wrap trust-inner">
+        {trust.map((t) => <span class="trust-item">{t}</span>)}
       </div>
-    </section>
+    </div>
 
     <section class="band" id="included">
       <div class="wrap">
         <p class="section-label">What you get</p>
-        <h2>Gutter cleaning in {s.name}: what's included</h2>
+        <h2>Professional gutter cleaning in {s.name}: what's included</h2>
+        <p class="lede-sm">{local.intro} One visit covers everything. No return trips, no upsells.</p>
         <div class="included-grid">
           {included.map((i) => (
             <div class="included-item"><div><strong>{i.t}</strong><span>{i.d}</span></div></div>
@@ -122,88 +195,68 @@ const menu = [
 
     <section class="band band-ink">
       <div class="wrap">
+        <p class="section-label on-dark">Gary's promise</p>
         <h2>What you can count on</h2>
-        <div class="promise-grid">
-          <div class="promise-item">
-            <h3>A firm price, by text</h3>
-            <p>We check your roof on satellite and text you a fixed price for the job.</p>
-          </div>
-          <div class="promise-item">
-            <h3>Quick replies</h3>
-            <p>Enquiries are answered as they come in during Perth hours.</p>
-          </div>
-          <div class="promise-item">
-            <h3>No obligation</h3>
-            <p>Don't like the price? Ignore the text. Nobody will chase you.</p>
-          </div>
-          <div class="promise-item">
-            <h3>Straight answers</h3>
-            <p>If your house needs more than a standard clean, you hear it before the work, not after.</p>
-          </div>
+        <div class="reason-grid reason-grid-4">
+          {promises.map((r) => (
+            <div class="rc">
+              <span class="rc-icon" aria-hidden="true">{r.icon}</span>
+              <div><h3 class="rc-title">{r.t}</h3><p class="rc-desc">{r.d}</p></div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
 
     <section class="band" id="local">
-      <div class="wrap">
-        <div class="local-wrap prose">
-          <p class="section-label">Local guide</p>
-          <h2>Gutter cleaning in {s.name} homes</h2>
-          <p class="article-intro">{s.lead}</p>
-
-          <dl class="facts">
-            {s.facts.map((f) => (
-              <div><dt>{f.label}</dt><dd>{f.value}</dd></div>
-            ))}
-          </dl>
-
-          {s.sections.map((sec) => (
-            <Fragment>
-              <h3>{sec.h}</h3>
-              {sec.p.map((para) => <p>{para}</p>)}
-            </Fragment>
-          ))}
-
-          {s.bfp && (
-            <p>
-              {s.bfp} The mapping is done address by address, so check your own
-              on the WA Map of Bush Fire Prone Areas.
-            </p>
-          )}
-
-          {council.gutterQuote && (
-            <div class="note-box">
-              <p>
-                <strong>What the {council.name} notice says.</strong> The {council.noticeName},
-                issued under section 33 of the Bush Fires Act 1954, applies to {council.appliesTo}.
-                Its words on gutters are: “{council.gutterQuote}” Work is due by {council.complyBy} and
-                must be maintained until {council.maintainUntil}. The stated penalty for not complying
-                is {council.penalty}.
-              </p>
-              <p class="small">
-                Councils reissue this notice every year. Read the current
-                notice on the {council.name} website rather than relying on our summary.
-              </p>
-            </div>
-          )}
-        </div>
+      <div class="wrap local-wrap">
+        <p class="section-label">Local homes</p>
+        <h2>Gutter cleaning for {s.name} homes</h2>
+        <ul class="local-points">
+          <li>{local.points[0]}</li>
+          <li>{local.points[1]}</li>
+          <li>{councilPoint}</li>
+        </ul>
       </div>
     </section>
 
     <PriceCards heading={`Gutter Cleaning ${s.name} Prices — No Hidden Fees`} />
 
-    <section class="band" id="faq">
+    <section class="band" id="when">
       <div class="wrap">
-        <h2>{s.name} gutter cleaning questions</h2>
-        <Faq items={s.faqs} />
-        <p class="small muted" style="margin-top:1.5rem">{s.sources}</p>
+        <p class="section-label">Best times to book</p>
+        <h2>When to get your gutters cleaned in {s.name}</h2>
+        <div class="season-grid">
+          {seasons.map((x) => (
+            <div class="season-card">
+              <span class="season-icon" aria-hidden="true">{x.icon}</span>
+              <h3>{x.t}</h3>
+              <p class="season-when">{x.when}</p>
+              <p>{x.d}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-sand" id="faq">
+      <div class="wrap">
+        <p class="section-label">Common questions</p>
+        <h2>Gutter cleaning {s.name}: FAQ</h2>
+        <Faq items={faqs} />
+      </div>
+    </section>
+
+    <section class="quote-band">
+      <div class="wrap">
+        <EnquiryForm suburb={s.name} postcode={s.postcode} heading={`Book gutter cleaning in ${s.name}`} />
       </div>
     </section>
 
     <section class="cta-band">
       <div class="wrap">
-        <h2>What does your {s.name} roof cost?</h2>
-        <p>Send your suburb and mobile. We'll text a firm price, with no obligation to take it.</p>
+        <h2>Your local gutter cleaner in {s.name}</h2>
+        <p>Before &amp; after photos, downpipes flushed, a tidy finish and a firm price upfront.</p>
         <a class="btn" href="#enquire">Enquire now →</a>
       </div>
     </section>
