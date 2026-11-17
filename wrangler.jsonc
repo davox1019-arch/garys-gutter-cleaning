@@ -6,11 +6,12 @@
 
   // The live domain. www is attached too and the Worker redirects it to the
   // bare domain, so only one version of each page is ever indexed.
-  // Waiting on the domain being added to Cloudflare — uncomment then.
-  // "routes": [
-  //   { "pattern": "garysguttercleaning.com.au", "custom_domain": true },
-  //   { "pattern": "www.garysguttercleaning.com.au", "custom_domain": true }
-  // ],
+  // The live domain. www is attached too and the Worker redirects it to the
+  // bare domain, so only one version of each page is ever indexed.
+  "routes": [
+    { "pattern": "garysguttercleaning.com.au", "custom_domain": true },
+    { "pattern": "www.garysguttercleaning.com.au", "custom_domain": true }
+  ],
   "workers_dev": true,
 
   "assets": {
