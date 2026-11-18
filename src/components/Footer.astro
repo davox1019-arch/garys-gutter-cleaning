@@ -9,9 +9,12 @@ export interface Props {
   operatingIn?: { suburb: string; neighbours: string[] };
 }
 const { bare = false, landing = false, operatingIn } = Astro.props;
-const areaLine = operatingIn
-  ? `${operatingIn.suburb} and nearby ${operatingIn.neighbours.slice(0, -1).join(', ')} and ${operatingIn.neighbours[operatingIn.neighbours.length - 1]}`
-  : '';
+const nb = operatingIn?.neighbours ?? [];
+const areaLine = !operatingIn
+  ? ''
+  : nb.length === 0
+    ? operatingIn.suburb
+    : `${operatingIn.suburb} and nearby ${nb.length === 1 ? nb[0] : `${nb.slice(0, -1).join(', ')} and ${nb[nb.length - 1]}`}`;
 const year = new Date().getFullYear();
 ---
 

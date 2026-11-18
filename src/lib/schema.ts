@@ -1,5 +1,5 @@
 import { site, schemaPriceRange } from '../../site.config.mjs';
-import { suburbs } from '../data/suburbs';
+import { suburbPages } from '../data/suburbPages';
 
 export interface Crumb {
   name: string;
@@ -36,10 +36,10 @@ export function businessSchema() {
     serviceType: ['Gutter cleaning', 'Downpipe clearing', 'Gutter guard installation'],
     description:
       'Gutter cleaning, downpipe clearing and gutter guard for homes across the Perth metropolitan area, priced from satellite imagery of the property.',
-    // Perth, then every suburb with a page and its bordering suburbs.
+    // Perth, then every suburb with a page.
     areaServed: [
       { '@type': 'City', name: 'Perth', containedInPlace: { '@type': 'State', name: site.stateName } },
-      ...[...new Set(suburbs.flatMap((s) => [s.name, ...s.neighbours]))].sort().map((name) => ({
+      ...suburbPages.map((s) => s.name).sort().map((name) => ({
         '@type': 'Place',
         name: `${name}, ${site.state}`,
       })),

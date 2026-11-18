@@ -4,7 +4,7 @@ import EnquiryForm from '../components/EnquiryForm.astro';
 import PageHero from '../components/PageHero.astro';
 import Faq from '../components/Faq.astro';
 import { site, fromPrice, priceBadge, priceSentence } from '../../site.config.mjs';
-import { suburbs } from '../data/suburbs';
+import { suburbPages, regions } from '../data/suburbPages';
 import { faqSchema, serviceSchema, type FaqItem, websiteSchema } from '../lib/schema';
 
 // Bureau of Meteorology, Perth Metro (station 009225), mean monthly rainfall
@@ -85,11 +85,6 @@ const guides = [
   { icon: '🔥', title: 'Kalamunda fire notice and your gutters', desc: 'What the City of Kalamunda notice says, word for word, and when it applies.', href: '/gutter-cleaning-kalamunda/' },
 ];
 
-const groups = [
-  { key: 'hills', title: 'Perth Hills' },
-  { key: 'east', title: 'Eastern suburbs and foothills' },
-  { key: 'north', title: 'Northern suburbs' },
-] as const;
 ---
 
 <Layout
@@ -111,7 +106,7 @@ const groups = [
       wide
       eyebrow="Gutter Cleaning Across Perth"
       badge={priceBadge}
-      lead="Gutter cleaning across Perth's Hills, eastern and northern suburbs. Gutters, downpipes and gutter guard — priced from your roof on satellite and texted to you as a firm price."
+      lead="Gutter cleaning across every Perth suburb, from the coast to the Hills. Gutters, downpipes and gutter guard — priced from your roof on satellite and texted to you as a firm price."
       sub={['Firm price by text', 'No site visit needed', 'Single & two storey', 'No obligation']}
       secondary={{ href: '/gutter-cleaning-cost-perth/', label: 'See prices →' }}
     >
@@ -260,19 +255,18 @@ const groups = [
         <p class="section-label">Service areas</p>
         <h2>Gutter cleaning across Perth</h2>
         <p class="lede-sm">
-          We quote anywhere in the metro area. These suburbs have a local guide
-          of their own.
+          Every suburb in the Perth metro area, each with its own page.
         </p>
         <div class="region-grid">
-          {groups.map((g) => (
-            <div class="region">
-              <h3>{g.title}</h3>
+          {regions.map((g) => (
+            <details class="region">
+              <summary><h3>{g.title}</h3><span>{suburbPages.filter((s) => s.region === g.key).length} suburbs</span></summary>
               <ul>
-                {suburbs.filter((s) => s.group === g.key).map((s) => (
+                {suburbPages.filter((s) => s.region === g.key).map((s) => (
                   <li><a href={`/gutter-cleaning-${s.slug}/`}>{s.name}</a></li>
                 ))}
               </ul>
-            </div>
+            </details>
           ))}
         </div>
         <p style="margin-top:1.25rem"><a href="/service-areas/">All service areas →</a></p>

@@ -16,15 +16,17 @@
 
 export interface Council {
   name: string;
-  noticeName: string;
-  noticeUrl: string;
-  /** The notice's own words about gutters, or null if it has none. */
-  gutterQuote: string | null;
+  noticeName?: string;
+  noticeUrl?: string;
+  /** The notice's own words about gutters; null if the notice has been read
+   *  and says nothing about gutters; absent if nobody has read it yet. Pages
+   *  make no claim either way about a council whose notice is unread. */
+  gutterQuote?: string | null;
   /** Which properties that clause applies to, in the notice's terms. */
-  appliesTo: string;
-  complyBy: string;
-  maintainUntil: string;
-  penalty: string;
+  appliesTo?: string;
+  complyBy?: string;
+  maintainUntil?: string;
+  penalty?: string;
 }
 
 export const councils: Record<string, Council> = {
@@ -79,4 +81,31 @@ export const councils: Record<string, Council> = {
     maintainUntil: '31 May',
     penalty: '',
   },
+  // The other metropolitan councils. Their fire notices have not been read
+  // for this site yet, so no page says anything about them.
+  bassendean: { name: 'Town of Bassendean' },
+  bayswater: { name: 'City of Bayswater' },
+  belmont: { name: 'City of Belmont' },
+  cambridge: { name: 'Town of Cambridge' },
+  canning: { name: 'City of Canning' },
+  claremont: { name: 'Town of Claremont' },
+  cockburn: { name: 'City of Cockburn' },
+  cottesloe: { name: 'Town of Cottesloe' },
+  'east-fremantle': { name: 'Town of East Fremantle' },
+  fremantle: { name: 'City of Fremantle' },
+  gosnells: { name: 'City of Gosnells' },
+  kwinana: { name: 'City of Kwinana' },
+  melville: { name: 'City of Melville' },
+  'mosman-park': { name: 'Town of Mosman Park' },
+  nedlands: { name: 'City of Nedlands' },
+  'peppermint-grove': { name: 'Shire of Peppermint Grove' },
+  perth: { name: 'City of Perth' },
+  rockingham: { name: 'City of Rockingham' },
+  'serpentine-jarrahdale': { name: 'Shire of Serpentine Jarrahdale' },
+  'south-perth': { name: 'City of South Perth' },
+  stirling: { name: 'City of Stirling' },
+  subiaco: { name: 'City of Subiaco' },
+  'victoria-park': { name: 'Town of Victoria Park' },
+  vincent: { name: 'City of Vincent' },
+  wanneroo: { name: 'City of Wanneroo' },
 };

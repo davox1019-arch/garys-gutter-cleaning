@@ -10,16 +10,15 @@
  * FAQ, enquiry form, final call to action. No census tables, rainfall essays
  * or source notes on the page.
  *
- * Links (owner's decision, November 2026): the page links to no other page
- * on the site except the homepage, through a small visible breadcrumb
- * ("Home › Gutter cleaning {suburb}") that carries matching BreadcrumbList
- * schema. The logo opens an on-page menu; every other link is an in-page
- * anchor, a phone link, or plain text. The footer names the suburb and three
- * bordering suburbs as plain text.
+ * Every Perth suburb has a page (src/data/suburbPages.ts). Links (owner's
+ * decision, November 2026, as on David's site): each page links to the pages
+ * for the suburbs that border it ("Gutter cleaning near {suburb}"), and to
+ * the homepage through a small visible breadcrumb ("Home › Gutter cleaning
+ * {suburb}") that carries matching BreadcrumbList schema. The logo opens an
+ * on-page menu. The footer names the suburb and up to three neighbours.
  *
- * Unique per suburb: title, description, hero line, the local note
- * (src/data/suburbLocal.ts), the council fire-notice details, two
- * suburb-specific FAQs and the nearby suburbs.
+ * Unique per suburb: title, description, the local note, the council
+ * fire-notice details, two suburb-specific FAQs and the nearby suburbs.
  */
 import Layout from '../layouts/Layout.astro';
 import EnquiryForm from '../components/EnquiryForm.astro';
@@ -27,34 +26,28 @@ import PageHero from '../components/PageHero.astro';
 import Faq from '../components/Faq.astro';
 import { site, fromPrice, priceBadge } from '../../site.config.mjs';
 import PriceCards from '../components/PriceCards.astro';
-import { suburbs, type Suburb } from '../data/suburbs';
-import { suburbLocal } from '../data/suburbLocal';
-import { councils } from '../data/councils';
+import { suburbPages, regionOf, type SuburbPage } from '../data/suburbPages';
 import { faqSchema, serviceSchema } from '../lib/schema';
 
 export function getStaticPaths() {
-  return suburbs.map((s) => ({ params: { suburb: s.slug }, props: { s } }));
+  return suburbPages.map((s) => ({ params: { suburb: s.slug }, props: { s } }));
 }
 
-const { s } = Astro.props as { s: Suburb };
-const council = councils[s.council];
-const local = suburbLocal[s.slug];
-if (!local) throw new Error(`No local note for ${s.slug} in src/data/suburbLocal.ts`);
+const { s } = Astro.props as { s: SuburbPage };
+const council = s.council;
+const local = { intro: s.intro, points: s.points };
 const path = `/gutter-cleaning-${s.slug}/`;
 const p = site.pricing;
 const tiers = p.tiers;
 
 // Search snippet: keyword + postcode + price first, ticked selling points,
 // then bordering suburbs, which makes each one unique. Kept to 160 characters.
-const [n1, n2, n3] = s.neighbours;
+const nearby = s.nearby;
+const andList = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 const metaDesc = (() => {
   const base = `Gutter cleaning ${s.name} ${s.postcode} from $${fromPrice} ✓ Trusted & local ✓ Professional service ✓ Upfront pricing ✓ Free quote`;
-  const options = [
-    `${base} ✓ Also ${n1}, ${n2} & ${n3}`,
-    `${base} ✓ Also ${n1} & ${n2}`,
-    `${base} ✓ Also ${n1}`,
-    base,
-  ];
+  const also = (xs: string[]) => `${base} ✓ Also ${xs.length < 2 ? xs[0] : `${xs.slice(0, -1).join(', ')} & ${xs[xs.length - 1]}`}`;
+  const options = [3, 2, 1].filter((k) => nearby.length >= k).map((k) => also(nearby.slice(0, k))).concat(base);
   return options.find((d) => d.length <= 160) ?? base;
 })();
 const title = [
@@ -62,7 +55,7 @@ const title = [
   `Gutter Cleaning ${s.name} | From $${fromPrice} | Trusted Local`,
   `Gutter Cleaning ${s.name} | From $${fromPrice}`,
 ].find((t) => t.length <= 60)!;
-const region = { hills: 'Perth Hills', east: 'Eastern Suburbs', north: 'Northern Suburbs' }[s.group];
+const region = regionOf[s.region].title;
 const hasNotice = !!council.gutterQuote;
 
 const fmtHour = (h: number) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
@@ -103,9 +96,12 @@ const seasons = [
 ];
 
 // Council point for the local note, from councils.ts.
+// No claim at all for a council whose notice nobody has read yet.
 const councilPoint = hasNotice
   ? `🔥 ${council.name} fire notice: gutters clear of flammable matter by ${council.complyBy}`
-  : `📅 No council gutter deadline here, so clean before the winter rain`;
+  : council.gutterQuote === null
+    ? `📅 No council gutter deadline here, so clean before the winter rain`
+    : `📅 Best cleaned in April or May, before the winter rain`;
 
 // FAQ: the common questions (as on David's pages), plus this suburb's own two.
 const commonFaqs = [
@@ -133,7 +129,7 @@ const moreFaqs = [
   },
   {
     q: `Is Gary's Gutter Cleaning local to ${s.name}?`,
-    a: `Yes. Gary is a local Perth gutter cleaner working across the ${region}, including ${s.name}, ${n1}, ${n2} and ${n3}.`,
+    a: `Yes. Gary is a local Perth gutter cleaner working across ${regionOf[s.region].across}, including ${andList([s.name, ...nearby])}.`,
   },
 ];
 const faqs = [...commonFaqs, ...s.faqs, ...moreFaqs];
@@ -144,6 +140,7 @@ const menu = [
   { href: '#pricing', label: 'Prices' },
   { href: '#when', label: 'When to book' },
   { href: '#faq', label: 'FAQ' },
+  ...(s.links.length ? [{ href: '#nearby', label: 'Nearby suburbs' }] : []),
 ];
 ---
 
@@ -152,7 +149,7 @@ const menu = [
   description={metaDesc}
   menu={menu}
   crumbs={[{ name: `Gutter cleaning ${s.name}`, href: path }]}
-  operatingIn={{ suburb: s.name, neighbours: s.neighbours }}
+  operatingIn={{ suburb: s.name, neighbours: nearby }}
   schema={[
     serviceSchema({
       name: `Gutter cleaning ${s.name}`,
@@ -252,6 +249,21 @@ const menu = [
         <EnquiryForm suburb={s.name} postcode={s.postcode} heading={`Book gutter cleaning in ${s.name}`} />
       </div>
     </section>
+
+    {s.links.length > 0 && (
+      <section class="band" id="nearby">
+        <div class="wrap">
+          <p class="section-label">Nearby suburbs</p>
+          <h2>Gutter cleaning near {s.name}</h2>
+          <p class="lede-sm">Gary also covers the suburbs around {s.name}. Each has its own page.</p>
+          <ul class="nearby-links">
+            {s.links.map((l) => (
+              <li><a href={`/gutter-cleaning-${l.slug}/`}>Gutter cleaning {l.name} →</a></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
 
     <section class="cta-band">
       <div class="wrap">

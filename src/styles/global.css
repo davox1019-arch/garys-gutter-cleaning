@@ -738,3 +738,18 @@ body { padding-bottom: 4.5rem; }
   .included-item span { font-size: 0.92rem; line-height: 1.4; }
   .included-item::before { flex-basis: 1.35rem; height: 1.35rem; }
 }
+
+/* Suburb pages: links to the bordering suburbs' pages. */
+.nearby-links { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.6rem; }
+.nearby-links li { margin: 0; }
+.nearby-links a { display: block; padding: 0.75rem 1rem; border: 2px solid var(--line); border-radius: 10px; background: var(--white); font-weight: 700; color: var(--ink); text-decoration: none; }
+.nearby-links a:hover { border-color: var(--forest); background: var(--sky); }
+
+/* Homepage: every suburb, folded by region. */
+details.region summary { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; cursor: pointer; list-style: none; }
+details.region summary::-webkit-details-marker { display: none; }
+details.region summary h3 { margin: 0; }
+details.region summary span { font-size: 0.85rem; color: var(--ink-soft); white-space: nowrap; }
+details.region summary span::after { content: ' ▾'; }
+details.region[open] summary span::after { content: ' ▴'; }
+details.region ul { columns: 2; column-gap: 1rem; margin-top: 0.75rem; }

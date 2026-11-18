@@ -9,7 +9,7 @@
  * enquiry bounced for months.
  */
 import { site } from '../../site.config.mjs';
-import { suburbs } from '../data/suburbs';
+import { suburbPages } from '../data/suburbPages';
 
 export interface Props {
   /** On a suburb page, the suburb field starts filled in with it. */
@@ -21,7 +21,7 @@ const { suburb = '', postcode = '', heading = 'Send an enquiry' } = Astro.props;
 const example = suburb
   ? `e.g. 12 Example St, ${suburb}${postcode ? ' WA ' + postcode : ''}`
   : 'e.g. 12 Example St, Kalamunda WA 6076';
-const suburbNames = [...suburbs].map((s) => s.name).sort();
+const suburbNames = suburbPages.map((s) => s.name).sort();
 const fmt = (h: number) => (h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`);
 const hours = `${fmt(site.quoteHours.open)}–${fmt(site.quoteHours.close)} Perth time`;
 const tel = site.phone.replace(/\s/g, '');

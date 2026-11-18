@@ -26,3 +26,6 @@ wrangler.jsonc.backup
 
 # Local wrangler state (includes the local D1 database)
 .wrangler/
+
+# Downloaded source data for scripts/suburbs/build.py
+scripts/suburbs/.cache/
